@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PACER Test Timer (AI Powered)</title>
+    <title>PACER Test Timer</title>
     
     <!-- Import Google Fonts: Prompt and Sarabun -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -88,28 +88,75 @@
             font-weight: 700;
         }
         
-        /* NEW: Test Set Input Styles */
+        /* NEW: Test Set Input Styles (Updated layout) */
         .set-input-group {
             margin-bottom: 20px;
-            padding: 10px;
+            padding: 15px;
             background-color: #f0f0f0;
-            border-radius: 8px;
+            border-radius: 12px;
             display: flex;
             flex-wrap: wrap;
             justify-content: center;
             align-items: center;
-            gap: 15px;
+            gap: 20px;
             font-weight: 600;
             font-size: 16px;
         }
 
+        .set-control-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
         .set-input-group input {
-            width: 50px;
+            width: 60px;
             padding: 8px;
             border: 1px solid #ccc;
-            border-radius: 4px;
+            border-radius: 6px;
             text-align: center;
-            font-size: 16px;
+            font-size: 18px;
+            font-weight: bold;
+            color: var(--accent-color);
+        }
+
+        .set-navigator {
+            display: flex;
+            align-items: center;
+            background: white;
+            border-radius: 8px;
+            padding: 5px;
+            border: 1px solid #ccc;
+        }
+
+        .set-nav-btn {
+            background-color: #ecf0f1;
+            border: none;
+            color: var(--text-main);
+            width: 30px;
+            height: 30px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+        .set-nav-btn:hover {
+            background-color: #bdc3c7;
+        }
+        .set-nav-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .current-set-text {
+            font-size: 20px;
+            font-weight: bold;
+            color: var(--highlight-color);
+            margin: 0 15px;
+            min-width: 20px;
         }
 
 
@@ -301,6 +348,7 @@
             gap: 15px;
             margin-top: 25px;
             flex-wrap: wrap;
+            align-items: center;
         }
 
         button.action-btn {
@@ -334,6 +382,9 @@
             box-shadow: none;
         }
 
+        /* ปุ่ม End Set (สีม่วงสำหรับจบชุดก่อนเวลา) */
+        button.end-set-btn {
+            background-color: #8e44ad;
         /* ปุ่ม Analyze AI */
         button.analyze-btn {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -344,6 +395,36 @@
         button.end-set-btn {
             background-color: #8e44ad;
             box-shadow: 0 4px 15px rgba(142, 68, 173, 0.3);
+        }
+
+        /* Checkbox Styling */
+        .export-options {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 10px;
+            gap: 10px;
+        }
+        
+        .checkbox-wrapper {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-main);
+            background: #f0f0f0;
+            padding: 8px 15px;
+            border-radius: 20px;
+            user-select: none;
+        }
+        
+        .checkbox-wrapper input {
+            margin-right: 8px;
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
         }
 
         .progress-bar {
@@ -382,66 +463,66 @@
             color: var(--countdown-color);
             font-size: 36px;
         }
-
-        /* Modal Styles for AI Output */
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            display: none; /* Hidden by default */
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-        }
         
-        .modal-content {
-            background: white;
-            padding: 30px;
-            border-radius: 15px;
-            width: 90%;
-            max-width: 500px;
-            text-align: left;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-            position: relative;
-        }
-        
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-        }
-        
-        .modal-title {
-            font-size: 20px;
-            font-weight: bold;
-            color: var(--ai-color);
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        
-        .modal-close {
-            background: none;
-            border: none;
-            font-size: 24px;
-            cursor: pointer;
-            color: #999;
-        }
-        
-        .ai-loading {
-            text-align: center;
-            color: #777;
-            padding: 20px;
-        }
-        
-        .ai-result {
-            line-height: 1.6;
-            white-space: pre-wrap;
-            color: #333;
+        /* FIX: Print Media Queries for clean PDF output via browser's Save as PDF */
+        @media print {
+            body {
+                background: none;
+                margin: 0;
+                padding: 0;
+                /* Force Thai font for printing (usually inherited, but safe to set) */
+                font-family: 'Sarabun', sans-serif !important;
+            }
+            .container {
+                box-shadow: none;
+                padding: 10mm; 
+                width: auto;
+                max-width: none;
+            }
+            /* Hide non-essential interactive elements */
+            .settings-group,
+            .set-input-group, 
+            .score-buttons-container,
+            .button-group,
+            .progress-bar,
+            .next-beep-box,
+            .export-options { /* Hide checkbox in print */
+                display: none !important;
+            }
+            /* Ensure text display sections are visible and clean */
+            .display-grid,
+            .timer-display,
+            .score-display,
+            .saved-results-container {
+                display: block !important; /* Override if any container logic hides them */
+                margin-bottom: 15px;
+                padding: 0;
+            }
+            .display-grid {
+                /* Simplify layout for print */
+                display: flex !important;
+                flex-wrap: wrap;
+                gap: 5px;
+            }
+            .stat-box {
+                border: 1px solid #ccc;
+                padding: 5px 10px;
+                background-color: #fff;
+                width: 30%; /* Adjust size for print */
+                box-sizing: border-box;
+            }
+            .stat-value {
+                font-size: 24px;
+            }
+            .results-list li {
+                border-bottom: 1px solid #ccc;
+                page-break-inside: avoid; 
+                padding: 5px 0;
+            }
+            h1 {
+                margin-top: 0;
+                margin-bottom: 10px;
+            }
         }
     </style>
 </head>
@@ -454,11 +535,20 @@
 
         <h1>PACER Test Timer</h1>
         
-        <!-- Test Set Input (Start) -->
+        <!-- Updated Test Set Input Area -->
         <div class="set-input-group">
-            <label for="totalSets">จำนวนชุดการทดสอบ:</label>
-            <input type="number" id="totalSets" value="1" min="1" onchange="updateTotalSets(this.value); toggleButtonsState();" oninput="toggleButtonsState()">
-            <div id="currentSetDisplay">ชุดปัจจุบัน: 1</div>
+            <div class="set-control-item">
+                <label for="totalSets">จำนวนชุดทั้งหมด:</label>
+                <input type="number" id="totalSets" value="1" min="1" onchange="updateTotalSets(this.value); toggleButtonsState();" oninput="toggleButtonsState()">
+            </div>
+            <div class="set-control-item">
+                <label>ชุดปัจจุบัน:</label>
+                <div class="set-navigator">
+                    <button class="set-nav-btn" id="prev-set-btn" onclick="changeSet(-1)">&#9664;</button>
+                    <span id="currentSetDisplay" class="current-set-text">1</span>
+                    <button class="set-nav-btn" id="next-set-btn-nav" onclick="changeSet(1)">&#9654;</button>
+                </div>
+            </div>
         </div>
 
         <div class="display-grid">
@@ -520,8 +610,14 @@
 
             <button id="reset-btn" class="action-btn" onclick="resetTest()" style="display: none; background-color: #e74c3c; box-shadow: 0 4px 15px rgba(231, 76, 60, 0.3);">RESET ALL</button>
             
-            <!-- ปุ่มวิเคราะห์ผลด้วย AI จะแสดงเมื่อมีคะแนนบันทึกแล้ว -->
-            <button id="analyze-btn" class="action-btn analyze-btn" onclick="analyzePerformance()" style="display: none;">✨ วิเคราะห์ผล (AI)</button>
+            <!-- New: Checkbox and Pilot Button -->
+            <div class="export-options" id="export-options-container" style="display: none; width: 100%;">
+                <label class="checkbox-wrapper">
+                    <input type="checkbox" id="exportAllSets" checked>
+                    รวมผลทุกชุดในไฟล์เดียว
+                </label>
+            </div>
+
             <!-- NEW: PDF Export Button -->
             <button id="pdf-export-btn" class="action-btn analyze-btn" onclick="exportToPDF()" style="display: none;">⬇️ ส่งออกเป็น PDF</button>
         </div>
@@ -535,112 +631,8 @@
         </div>
     </div>
 
-    <!-- AI Modal -->
-    <div class="modal-overlay" id="ai-modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <div class="modal-title">✨ Gemini AI Says:</div>
-                <button class="modal-close" onclick="closeModal()">&times;</button>
-            </div>
-            <div id="ai-content" class="ai-result">
-                <!-- Content will be injected here -->
-            </div>
-        </div>
-    </div>
-
     <script>
-        // === Gemini API Setup ===
-        const apiKey = ""; // API Key provided by environment
-
-        async function callGemini(prompt) {
-            // Added simple exponential backoff for robustness
-            const maxRetries = 3;
-            for (let i = 0; i < maxRetries; i++) {
-                try {
-                    // Using a dummy response if apiKey is empty for development purposes
-                    if (apiKey === "") {
-                         return new Promise(resolve => setTimeout(() => {
-                            resolve(`
-                                **1. การประเมินผล:**
-                                คะแนนของคุณคือ Level 5 - Lap 3 (รวม 39 รอบ) นับเป็นการเริ่มต้นที่ดีมาก! แสดงให้เห็นถึงระดับความฟิตของหัวใจและหลอดเลือดที่แข็งแรง
-                                
-                                **2. เคล็ดลับการฝึกซ้อม:**
-                                ลองฝึกซ้อมแบบ **Interval Training** โดยการสลับวิ่งเร็วในระยะทางสั้นๆ (เช่น 200 เมตร) กับการเดินหรือวิ่งเบาๆ (เช่น 400 เมตร) ซ้ำไปมา 5-8 รอบ จะช่วยเพิ่มขีดความสามารถในการเผาผลาญออกซิเจน (VO2 max) และยืดเวลาที่คุณสามารถวิ่งที่ความเร็วสูงได้
-                            `);
-                        }, 1500));
-                    }
-                    
-                    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            contents: [{
-                                parts: [{ text: prompt }]
-                            }]
-                        })
-                    });
-
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    }
-
-                    const data = await response.json();
-                    return data.candidates[0].content.parts[0].text;
-                } catch (error) {
-                    if (i === maxRetries - 1) {
-                        console.error("Gemini API Error after retries:", error);
-                        return "เกิดข้อผิดพลาดในการเชื่อมต่อกับ AI กรุณาลองใหม่อีกครั้ง";
-                    }
-                    // Wait for exponential time before retrying
-                    await new Promise(resolve => setTimeout(resolve, Math.pow(2, i) * 1000));
-                }
-            }
-        }
-
-        function showModal(content, isLoading = false) {
-            const modal = document.getElementById('ai-modal');
-            const contentDiv = document.getElementById('ai-content');
-            
-            modal.style.display = 'flex';
-            
-            if (isLoading) {
-                contentDiv.innerHTML = '<div class="ai-loading">กำลังปรึกษา Gemini AI... ✨<br>(กรุณารอสักครู่)</div>';
-            } else {
-                contentDiv.innerText = content;
-            }
-        }
-
-        function closeModal() {
-            document.getElementById('ai-modal').style.display = 'none';
-        }
-
-        // Feature: Analyze Performance
-        async function analyzePerformance() {
-            const completedLaps = totalCumulativeLaps; 
-
-            if (completedLaps <= 1) { 
-                 showModal("กรุณาวิ่งให้จบอย่างน้อย 1-2 รอบก่อนทำการวิเคราะห์ผลด้วย AI ครับ/ค่ะ", false);
-                 return;
-            }
-
-            const scoreText = document.getElementById('score-text').innerText;
-            
-            showModal("", true);
-            
-            const prompt = `Analyze this PACER test (Beep Test) result for a general user: 
-            Full Score Detail: ${scoreText}
-            
-            Please provide:
-            1. A short assessment of this fitness level (e.g. Good start, Excellent, Needs work).
-            2. One specific, actionable training tip to improve stamina for next time.
-            
-            Respond in Thai language. Keep the tone friendly and encouraging.`;
-            
-            const text = await callGemini(prompt);
-            showModal(text);
-        }
+        // Feature: Analyze Performance (REMOVED as requested)
 
         // === State Management ===
         let currentFont = 'Prompt';
@@ -693,20 +685,56 @@
             const total = parseInt(value);
             if (total >= 1) {
                 testSets.total = total;
+                // If current set is now beyond total, clamp it
+                if (testSets.current > total) {
+                    testSets.current = total;
+                    document.getElementById('currentSetDisplay').innerText = testSets.current;
+                    // Refresh UI
+                    renderRunnerScores();
+                    setupRunnerButtons();
+                }
             } else {
                 document.getElementById('totalSets').value = 1;
                 testSets.total = 1;
+                if (testSets.current > 1) {
+                    testSets.current = 1;
+                    document.getElementById('currentSetDisplay').innerText = 1;
+                    renderRunnerScores();
+                    setupRunnerButtons();
+                }
+            }
+        }
+        
+        // New Function to handle Set Navigation
+        function changeSet(delta) {
+            if (isRunning || isPaused) return; // Prevent changing while actively testing
+
+            const newSet = testSets.current + delta;
+            
+            if (newSet >= 1 && newSet <= testSets.total) {
+                testSets.current = newSet;
+                document.getElementById('currentSetDisplay').innerText = testSets.current;
+                
+                // When changing sets, we need to update the runner buttons to reflect data for the NEW set
+                // Also highlight relevant scores in the list (already handled by renderRunnerScores logic)
+                renderRunnerScores(); 
+                setupRunnerButtons();
             }
         }
         
         function toggleButtonsState() {
              const input = document.getElementById('totalSets');
              const hasRecordedScores = Object.keys(testSets.data).length > 0;
+             const navButtons = document.querySelectorAll('.set-nav-btn');
              
              input.disabled = isRunning;
+             
+             // Disable nav buttons if running
+             navButtons.forEach(btn => btn.disabled = isRunning);
 
+             // Show/Hide export options and buttons
+             document.getElementById('export-options-container').style.display = hasRecordedScores ? 'flex' : 'none';
              document.getElementById('pdf-export-btn').style.display = hasRecordedScores ? 'inline-block' : 'none';
-             document.getElementById('analyze-btn').style.display = hasRecordedScores && !isRunning ? 'inline-block' : 'none';
 
              const nextSetBtn = document.getElementById('next-set-btn');
              nextSetBtn.style.display = (isRunning || isPaused) ? 'inline-block' : 'none';
@@ -717,9 +745,15 @@
         }
 
 
+        // NEW: Updated function to Auto-Export PDF before advancing
         function finishTestAndAdvance() {
+            // Allow even if paused
             if (!isRunning && !isPaused) return; 
             
+            // 1. Auto Export PDF immediately
+            exportToPDF();
+
+            // 2. Finish test and advance set (Auto increment logic is inside finishTest)
             finishTest(true); 
         }
         
@@ -814,6 +848,7 @@
             }
 
             let lastSet = 0;
+            // Clear current state first before re-applying based on current Set
             document.querySelectorAll('.runner-score-btn').forEach(btn => {
                  btn.classList.remove('recorded');
                  const runnerId = btn.className.match(/runner-id-(\d+)/)[1];
@@ -1078,6 +1113,8 @@
         function finishTest(isManualFinish = false) {
             clearInterval(timerInterval);
             isRunning = false;
+            // FIX: Ensure isPaused is reset so changeSet can work
+            isPaused = false; 
             
             document.getElementById('status-text').style.color = "var(--text-main)";
             document.getElementById('countdown-display').innerText = "0.00";
@@ -1089,11 +1126,11 @@
             playTone();
             
             if (testSets.current < testSets.total && (isManualFinish || currentLevelIndex >= pacerData.length)) {
-                testSets.current++;
+                // Change set automatically
+                changeSet(1); 
+                // Reset timer for the NEW set
                 resetTest(true); 
-                document.getElementById('currentSetDisplay').innerText = `ชุดปัจจุบัน: ${testSets.current}`;
                 document.getElementById('status-text').innerText = "พร้อมสำหรับชุดต่อไป!";
-                setupRunnerButtons(); 
             } else {
                 document.getElementById('status-text').innerText = "Test Completed! (ชุดปัจจุบันจบแล้ว)";
                 
@@ -1129,7 +1166,7 @@
                 testSets.current = 1;
                 document.getElementById('totalSets').value = 1;
                 testSets.total = 1;
-                document.getElementById('currentSetDisplay').innerText = `ชุดปัจจุบัน: 1`;
+                document.getElementById('currentSetDisplay').innerText = `1`;
             }
 
             renderRunnerScores(); 
@@ -1150,15 +1187,16 @@
             closeModal(); 
         }
         
-        // --- PDF Export Logic (Uses jsPDF with English labels to fix font issue) ---
+        // --- PDF Export Logic (Uses jsPDF with English labels) ---
         function exportToPDF() {
             if (Object.keys(testSets.data).length === 0) {
-                 showModal("ไม่พบข้อมูลคะแนนที่บันทึกไว้ กรุณาบันทึกผลการทดสอบก่อนส่งออกเป็น PDF", false);
+                 alert("ไม่พบข้อมูลคะแนนที่บันทึกไว้ กรุณาบันทึกผลการทดสอบก่อนส่งออกเป็น PDF");
                 return;
             }
             
+            // Check if jsPDF is loaded
             if (typeof window.jspdf === 'undefined' || typeof window.jspdf.jsPDF === 'undefined') {
-                 showModal("กำลังโหลดไลบรารีส่งออก PDF... กรุณาลองใหม่อีกครั้งใน 2-3 วินาที", false);
+                 alert("กำลังโหลดไลบรารีส่งออก PDF... กรุณาลองใหม่อีกครั้งใน 2-3 วินาที");
                  return;
             }
 
@@ -1167,35 +1205,59 @@
             const currentSet = testSets.current;
             const today = new Date().toISOString().slice(0, 10);
             
-            const filename = `PACER_Set_${currentSet}_${today}.pdf`; 
+            // Check checkbox for export scope
+            const exportAll = document.getElementById('exportAllSets').checked;
+            
+            // Filename format: PACER_[Scope]_[Date].pdf
+            let filename;
+            if (exportAll) {
+                filename = `PACER_AllSets_${today}.pdf`;
+            } else {
+                filename = `PACER_Set_${currentSet}_${today}.pdf`;
+            }
 
             const doc = new jsPDF();
             let y = 10;
             const lineHeight = 7;
             const padding = 10;
             
-            // ใช้ภาษาอังกฤษเพื่อหลีกเลี่ยงปัญหาฟอนต์ไทยใน jsPDF
+            // Title (English)
             doc.setFont("Helvetica", "bold");
             doc.setFontSize(16);
-            doc.text("PACER Test Score Summary", padding, y); 
+            doc.text(exportAll ? "PACER Test Score Summary (All Sets)" : "PACER Test Score Summary (Single Set)", padding, y); 
             y += lineHeight;
 
+            // Header details (English)
             doc.setFontSize(10);
             doc.setFont("Helvetica", "normal");
             doc.text(`Export Date: ${today}`, padding, y);
-            doc.text(`Total Test Sets: ${testSets.total}`, 100, y); 
+            if (!exportAll) {
+                doc.text(`Set No.: ${currentSet} of ${testSets.total}`, 100, y); 
+            } else {
+                doc.text(`Total Test Sets: ${testSets.total}`, 100, y); 
+            }
             y += lineHeight * 2;
 
-            doc.setFontSize(10);
-            let lastSet = 0;
-            const scores = Object.keys(testSets.data)
+            // Filter data based on checkbox
+            let scores = Object.keys(testSets.data)
                 .map(key => ({ key, data: testSets.data[key] }))
+                // Filter: If exportAll is false, keep only items where data.set == currentSet
+                .filter(item => exportAll || item.data.set === currentSet)
                 .sort((a, b) => {
                     const [setA, idA] = a.key.split('-').map(Number);
                     const [setB, idB] = b.key.split('-').map(Number);
                     if (setA !== setB) return setA - setB;
                     return idA - idB;
                 });
+            
+            if (scores.length === 0) {
+                alert("ไม่พบข้อมูลคะแนนสำหรับชุดที่เลือก");
+                return;
+            }
+
+            // Score data processing
+            doc.setFontSize(10);
+            let lastSet = 0;
 
             scores.forEach(({ data }) => {
                 if (y > 280) { 
@@ -1210,21 +1272,22 @@
                     y += lineHeight;
                     doc.setFont("Helvetica", "bold");
                     doc.setFontSize(12);
-                    doc.text(`--- Test Set ${data.set} of ${testSets.total} ---`, padding, y); 
+                    // English Set Header
+                    doc.text(`--- Test Set ${data.set} ---`, padding, y); 
                     y += lineHeight;
                     lastSet = data.set;
                     doc.setFont("Helvetica", "normal");
                     doc.setFontSize(10);
                 }
 
-                // ใช้ข้อมูลภาษาอังกฤษ/ตัวเลข
-                const scoreLine = `Runner #${data.runnerId} (Set ${data.set}): ${data.levelLap} | Total Laps: ${data.score} | Distance: ${data.distance} m | Time: ${data.time}`;
+                // Score line with English labels
+                const scoreLine = `Runner #${data.runnerId}: ${data.levelLap} | Total Laps: ${data.score} | Distance: ${data.distance} m | Time: ${data.time}`;
                 
                 doc.text(scoreLine, padding, y);
                 y += lineHeight;
             });
 
-            doc.save(filename); // บันทึกไฟล์ทันที
+            doc.save(filename); // Direct file save
         }
 
         // --- Data Definitions ---
@@ -1261,7 +1324,7 @@
         // Initial setup for the 10 buttons when the page loads
         window.onload = function() {
             setupRunnerButtons();
-            document.getElementById('currentSetDisplay').innerText = `ชุดปัจจุบัน: ${testSets.current}`;
+            document.getElementById('currentSetDisplay').innerText = `1`;
             document.getElementById('cum-display').innerText = "0";
             document.getElementById('dist-display').innerText = "0";
             document.getElementById('score-text').innerText = "Level 1 - Lap 0 | รวม 0 รอบ | 0 ม.";
