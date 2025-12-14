@@ -338,6 +338,12 @@
             box-shadow: 0 4px 15px rgba(118, 75, 162, 0.3);
         }
 
+        /* ปุ่ม End Set (สีม่วงสำหรับจบชุดก่อนเวลา) */
+        button.end-set-btn {
+            background-color: #8e44ad;
+            box-shadow: 0 4px 15px rgba(142, 68, 173, 0.3);
+        }
+
         .progress-bar {
             width: 100%;
             height: 12px;
@@ -468,7 +474,7 @@
             </div>
             <div class="stat-box">
                 <div class="stat-label">Cum. Laps</div>
-                <div class="stat-value" id="cum-display">1</div>
+                <div class="stat-value" id="cum-display">0</div> 
             </div>
             <div class="stat-box">
                 <div class="stat-label">Distance (m)</div>
@@ -502,7 +508,10 @@
         <div class="button-group">
             <button id="start-btn" class="action-btn" onclick="startTest()">START TEST</button>
             <button id="pause-btn" class="action-btn" onclick="togglePause()" style="display: none; background-color: var(--pause-color); box-shadow: 0 4px 15px rgba(243, 156, 18, 0.3);">PAUSE</button>
-            <button id="reset-btn" class="action-btn" onclick="resetTest()" style="display: none; background-color: #e74c3c; box-shadow: 0 4px 15px rgba(231, 76, 60, 0.3);">RESET</button>
+            
+            <button id="next-set-btn" class="action-btn end-set-btn" onclick="finishTestAndAdvance()" style="display: none;">▶️ เริ่มชุดต่อไป (Manual)</button>
+
+            <button id="reset-btn" class="action-btn" onclick="resetTest()" style="display: none; background-color: #e74c3c; box-shadow: 0 4px 15px rgba(231, 76, 60, 0.3);">RESET ALL</button>
             
             <button id="analyze-btn" class="action-btn analyze-btn" onclick="analyzePerformance()" style="display: none;">✨ วิเคราะห์ผล (AI)</button>
             <button id="pdf-export-btn" class="action-btn analyze-btn" onclick="exportToPDF()" style="display: none;">⬇️ ส่งออกเป็น PDF</button>
@@ -597,10 +606,10 @@
 
         // Feature: Analyze Performance
         async function analyzePerformance() {
-            // Use the last recorded score of the current set for analysis, or the overall total if no score was recorded for current set
-            const completedLaps = totalCumulativeLaps - 1;
+            // ใช้คะแนนสะสมรวมที่แสดงอยู่เป็นหลัก (ซึ่งตอนนี้คือ totalCumulativeLaps)
+            const completedLaps = totalCumulativeLaps; 
 
-            if (completedLaps <= 1) { // Changed condition to better reflect needing some effort
+            if (completedLaps <= 1) { 
                  showModal("กรุณาวิ่งให้จบอย่างน้อย 1-2 รอบก่อนทำการวิเคราะห์ผลด้วย AI ครับ/ค่ะ", false);
                  return;
             }
@@ -631,7 +640,8 @@
         };
         let currentLevelIndex = 0;
         let currentShuttleCount = 0;
-        let totalCumulativeLaps = 1;
+        // ปรับแก้: totalCumulativeLaps จะนับรอบที่ *เสร็จสิ้น* แล้ว (0 เริ่มต้น)
+        let totalCumulativeLaps = 0; 
         
         let isRunning = false;
         let isPaused = false;
@@ -667,39 +677,34 @@
             }
         }
         
-        // NEW: Function to disable/enable Total Sets input when testing starts/stops
+        // NEW: Function to disable/enable Total Sets input and update PDF/AI button visibility
         function toggleButtonsState() {
              const input = document.getElementById('totalSets');
-             const currentValue = parseInt(input.value);
-
-             // Set min value dynamically to ensure no empty or negative input on blur
-             if (isNaN(currentValue) || currentValue < 1) {
-                 input.value = 1;
-                 testSets.total = 1;
-             }
+             const hasRecordedScores = Object.keys(testSets.data).length > 0;
+             const isFinished = !isRunning && (totalCumulativeLaps > 0 || hasRecordedScores);
              
-             // Disable input if test is running
              input.disabled = isRunning;
+
+             // แสดงปุ่ม PDF และ AI เมื่อมีการบันทึกคะแนนแล้ว
+             document.getElementById('pdf-export-btn').style.display = hasRecordedScores ? 'inline-block' : 'none';
+             document.getElementById('analyze-btn').style.display = hasRecordedScores ? 'inline-block' : 'none';
+
+             // แสดงปุ่ม Next Set เมื่อกำลังวิ่งอยู่ หรือ หยุดชั่วคราว
+             const nextSetBtn = document.getElementById('next-set-btn');
+             nextSetBtn.style.display = (isRunning || isPaused) ? 'inline-block' : 'none';
+
+             // ซ่อนปุ่ม Reset/Pause และแสดงปุ่ม Start เมื่อหยุดนิ่ง
+             document.getElementById('start-btn').style.display = !isRunning && !isPaused ? 'inline-block' : 'none';
+             document.getElementById('reset-btn').style.display = isRunning || isPaused ? 'inline-block' : 'none';
+             document.getElementById('pause-btn').style.display = isRunning || isPaused ? 'inline-block' : 'none';
         }
 
 
-        // NEW: Function to switch to the next set, resetting the timer state but keeping recorded scores
-        function startNextSet() {
-            if (testSets.current < testSets.total) {
-                testSets.current++;
-                resetTest(keepScores = true); // Reset timer state but keep the main data
-                document.getElementById('currentSetDisplay').innerText = `ชุดปัจจุบัน: ${testSets.current}`;
-                document.getElementById('status-text').innerText = "พร้อมสำหรับชุดต่อไป!";
-                // Re-setup buttons to remove 'recorded' state for the new set
-                setupRunnerButtons(); 
-            } else {
-                // If all sets are done, call finishTest logic again for cleanup and final buttons
-                document.getElementById('status-text').innerText = "การทดสอบครบทุกชุดแล้ว!";
-                document.getElementById('start-btn').style.display = 'none';
-                document.getElementById('reset-btn').style.display = 'inline-block';
-                document.getElementById('pdf-export-btn').style.display = 'inline-block';
-                document.getElementById('analyze-btn').style.display = 'inline-block'; // Allow final analysis
-            }
+        // NEW: Function to forcefully end current set and advance/finish
+        function finishTestAndAdvance() {
+            if (!isRunning && !isPaused) return; // Only allow when running or paused
+            
+            finishTest(true); // Pass true to indicate manual finish/advance
         }
         
         // --- Scoring and Display Logic ---
@@ -717,16 +722,17 @@
                 remaining -= currentLevelShuttles;
                 lvl++;
             }
-            return "Test Completed";
+            // Should only happen if completed all levels (e.g. 21) + 1
+            return "Max Level Completed"; 
         }
 
         function saveRunnerScore(runnerId) {
-            // The score is the number of completed laps/shuttles. Since totalCumulativeLaps includes the current lap, we subtract 1.
-            const completedLaps = totalCumulativeLaps - 1;
+            // ปรับแก้: คะแนนคือ totalCumulativeLaps (รวมรอบปัจจุบันที่วิ่งเสร็จแล้ว)
+            const completedLaps = totalCumulativeLaps; 
             
             if (completedLaps <= 0) { 
                 const statusText = document.getElementById('status-text').innerText;
-                document.getElementById('status-text').innerText = "⚠️ Error: ต้องเริ่มวิ่งก่อนบันทึกคะแนน";
+                document.getElementById('status-text').innerText = "⚠️ Error: ต้องเริ่มวิ่ง (ปี๊บแรก) ก่อนบันทึกคะแนน";
                 document.getElementById('status-text').style.color = "#e74c3c";
                 setTimeout(() => {
                     if (document.getElementById('status-text').innerText.includes("⚠️ Error")) {
@@ -756,11 +762,10 @@
             if (btn) {
                 btn.classList.add('recorded');
                 btn.innerText = `#${runnerId} (${completedLaps})`; // Show actual score
-                // Fix: Ensure button doesn't scale too much on active state
             }
             
             renderRunnerScores();
-
+            toggleButtonsState(); // Update PDF/AI buttons visibility
         }
         
         function renderRunnerScores() {
@@ -811,7 +816,7 @@
                 `;
                 list.appendChild(listItem);
                 
-                // Ensure the button for the CURRENT set is marked with the LATEST score
+                // Update the button for the CURRENT set with the LATEST score
                 if (data.set === testSets.current) {
                     const btn = document.querySelector(`.runner-buttons-grid .runner-id-${data.runnerId}`);
                     if (btn) {
@@ -851,15 +856,19 @@
         function updateDisplay() {
             const currentData = pacerData[currentLevelIndex];
             document.getElementById('level-display').innerText = currentData.level;
-            document.getElementById('shuttle-display').innerText = currentShuttleCount + 1;
             document.getElementById('speed-display').innerText = currentData.speed.toFixed(1);
-            document.getElementById('cum-display').innerText = totalCumulativeLaps;
             
-            // Distance calculation: Total completed laps * 20m. totalCumulativeLaps includes the current running lap, so subtract 1.
-            const distance = (totalCumulativeLaps - 1) * 20;
+            // Shuttle display should show current shuttle number (1-N)
+            document.getElementById('shuttle-display').innerText = currentShuttleCount + 1;
+            
+            // Cumulative laps is now total completed shuttles
+            document.getElementById('cum-display').innerText = totalCumulativeLaps; 
+            
+            // Distance calculation: Total completed laps * 20m.
+            const distance = totalCumulativeLaps * 20;
             document.getElementById('dist-display').innerText = distance.toLocaleString();
             
-            const completedLaps = totalCumulativeLaps - 1;
+            const completedLaps = totalCumulativeLaps;
             const levelLapStr = getFormattedScore(completedLaps);
             const distStr = (completedLaps * 20).toLocaleString();
             
@@ -922,10 +931,12 @@
                 audioCtx.resume();
             }
 
+            // Hide action buttons during countdown
             document.getElementById('start-btn').style.display = 'none';
             document.getElementById('reset-btn').style.display = 'none'; 
-            document.getElementById('analyze-btn').style.display = 'none'; 
-            document.getElementById('pdf-export-btn').style.display = 'none'; 
+            document.getElementById('pause-btn').style.display = 'none';
+            document.getElementById('next-set-btn').style.display = 'none';
+            // Keep PDF/AI hidden until test starts (already handled by toggleButtonsState)
             
             let countdown = 8;
             document.getElementById('status-text').innerText = `Starting in ${countdown}...`;
@@ -952,28 +963,34 @@
             isRunning = true;
             isPaused = false;
             
+            // Show action buttons
             document.getElementById('pause-btn').style.display = 'inline-block';
             document.getElementById('reset-btn').style.display = 'inline-block';
+            document.getElementById('next-set-btn').style.display = 'inline-block'; // Show manual advance button
+            
             document.getElementById('pause-btn').innerText = "PAUSE";
             document.getElementById('pause-btn').style.backgroundColor = 'var(--pause-color)';
             document.getElementById('status-text').innerText = "Running...";
             document.getElementById('status-text').style.color = "var(--text-main)";
-
-            // Only reset time/score if not coming from startNextSet (which resets it before calling this)
-            // But since resetTest(true) calls this, we ensure it's reset there. Here we just ensure logic runs.
-            if (totalCumulativeLaps === 1) { // Only reset if truly starting fresh
+            
+            // Start state
+            if (startTime === 0) { // Check if truly starting a new set
                  startTime = Date.now();
+                 currentLevelIndex = 0;
+                 currentShuttleCount = 0;
+                 totalCumulativeLaps = 0; // Starts at 0, first beep updates it to 1
             }
 
-            startShuttle();
-            playTone();
+            // The very first beep/shuttle setup happens here
+            nextShuttle(); 
+            // The nextShuttle function increments totalCumulativeLaps, updates display, and starts the timer.
 
             startInterval();
         }
 
         function startInterval() {
             timerInterval = setInterval(() => {
-                if (isPaused) return; // Safety check in case of race condition
+                if (isPaused) return; 
 
                 const now = Date.now();
                 const totalElapsed = now - startTime;
@@ -1004,6 +1021,8 @@
                 pauseBtn.style.backgroundColor = "#27ae60"; 
                 document.getElementById('status-text').innerText = "PAUSED";
                 document.getElementById('status-text').style.color = "#f39c12";
+                
+                toggleButtonsState(); // Update button visibility
 
             } else {
                 isPaused = false;
@@ -1019,6 +1038,7 @@
                 document.getElementById('status-text').style.color = "var(--text-main)";
 
                 startInterval(); 
+                toggleButtonsState(); // Update button visibility
             }
         }
 
@@ -1032,63 +1052,74 @@
         }
 
         function nextShuttle() {
+            // 1. Mark the previous shuttle as completed (or the current one if it's the first beep)
+            totalCumulativeLaps++; 
+            
             const currentLevelData = pacerData[currentLevelIndex];
 
+            // 2. Check if a level transition is needed for the NEXT shuttle (based on the completed lap)
             currentShuttleCount++;
-            totalCumulativeLaps++;
-
-            if (currentShuttleCount >= currentLevelData.shuttles) {
+            
+            if (currentShuttleCount > currentLevelData.shuttles) { // Using '>' here because totalCumulativeLaps includes this completed lap
                 currentLevelIndex++;
-                currentShuttleCount = 0;
+                currentShuttleCount = 1; // Reset shuttle count for the new level
 
                 if (currentLevelIndex >= pacerData.length) {
-                    finishTest();
+                    finishTest(); // Test finished naturally by max level
                     return;
                 }
 
                 playTone();
                 document.getElementById('status-text').innerText = `Level ${pacerData[currentLevelIndex].level} Started!`;
             } else {
+                // Not a level change, just a turn-around beep
                 playTone();
                 document.getElementById('status-text').innerText = "Turn Around & Run!";
             }
 
+            // 3. Prepare for the next shuttle
             startShuttle();
         }
 
-        function finishTest() {
+        // isManualFinish: true if user clicks "Start Next Set" button
+        function finishTest(isManualFinish = false) {
             clearInterval(timerInterval);
             isRunning = false;
-            // Re-enable Total Sets input
-            toggleButtonsState(); 
+            
+            // Re-enable Total Sets input and show final buttons
+            // toggleButtonsState will be called inside startNextSet/resetTest, so we don't need it here unless it's the final set.
             
             document.getElementById('status-text').style.color = "var(--text-main)";
             document.getElementById('countdown-display').innerText = "0.00";
             document.getElementById('progress-fill').style.width = "100%";
-            document.getElementById('pause-btn').style.display = 'none'; 
             
-            const completedLaps = totalCumulativeLaps - 1; // Final score is completed laps
-            document.getElementById('cum-display').innerText = completedLaps;
-            document.getElementById('dist-display').innerText = (completedLaps * 20).toLocaleString();
+            // The score displayed is the final cumulative score
+            updateDisplay(); 
             
-            const levelLapStr = getFormattedScore(completedLaps);
-            const distStr = (completedLaps * 20).toLocaleString();
-            document.getElementById('score-text').innerText = `${levelLapStr} | รวม ${completedLaps} รอบ | ${distStr} ม.`;
-
             playTone();
             playTone();
             
-            document.getElementById('reset-btn').style.display = 'inline-block';
-            document.getElementById('pdf-export-btn').style.display = 'inline-block';
-
-            if (testSets.current < testSets.total) {
-                // Show button to start next set
-                document.getElementById('status-text').innerHTML = `TEST FINISHED (ชุดที่ ${testSets.current}/${testSets.total}). <button class="action-btn" style="padding: 5px 10px; font-size: 16px; margin-top: 5px;" onclick="startNextSet()">เริ่มชุดต่อไป</button>`;
-                document.getElementById('analyze-btn').style.display = 'none';
+            if (testSets.current < testSets.total && (isManualFinish || currentLevelIndex >= pacerData.length)) {
+                // Advance to next set
+                testSets.current++;
+                resetTest(true); // Reset timer state but keep the main data
+                document.getElementById('currentSetDisplay').innerText = `ชุดปัจจุบัน: ${testSets.current}`;
+                document.getElementById('status-text').innerText = "พร้อมสำหรับชุดต่อไป!";
+                // Re-setup buttons to remove 'recorded' state for the new set
+                setupRunnerButtons(); 
             } else {
-                // All sets completed
-                document.getElementById('status-text').innerText = "Test Completed! (ทุกชุด)";
-                document.getElementById('analyze-btn').style.display = 'inline-block';
+                // All sets completed or forced manual finish on the final set
+                document.getElementById('status-text').innerText = "Test Completed! (ชุดปัจจุบันจบแล้ว)";
+                
+                // Show final options when test ends
+                document.getElementById('start-btn').style.display = 'inline-block';
+                document.getElementById('start-btn').innerText = 'START NEW SET (or RESET ALL)';
+                document.getElementById('reset-btn').style.display = 'inline-block';
+                document.getElementById('pause-btn').style.display = 'none';
+                document.getElementById('next-set-btn').style.display = 'none';
+                
+                // Final button visibility based on recorded scores
+                toggleButtonsState();
             }
         }
 
@@ -1098,28 +1129,20 @@
             isPaused = false;
             currentLevelIndex = 0;
             currentShuttleCount = 0;
-            totalCumulativeLaps = 1;
-            startTime = 0; // Ensure time is reset
+            totalCumulativeLaps = 0; // Starts at 0
+            startTime = 0; 
             
             // Re-enable Total Sets input
             toggleButtonsState();
 
-            document.getElementById('start-btn').style.display = 'inline-block';
-            document.getElementById('reset-btn').style.display = 'none';
-            document.getElementById('pause-btn').style.display = 'none'; 
-            document.getElementById('analyze-btn').style.display = 'none'; 
-            
-            const pauseBtn = document.getElementById('pause-btn');
-            pauseBtn.innerText = "PAUSE";
-            pauseBtn.style.backgroundColor = "var(--pause-color)";
-
+            // Reset display values
             document.getElementById('level-display').innerText = "1";
             document.getElementById('shuttle-display').innerText = "1";
             document.getElementById('speed-display').innerText = "8.5";
-            document.getElementById('cum-display').innerText = "1";
+            document.getElementById('cum-display').innerText = "0"; // Display 0
             document.getElementById('dist-display').innerText = "0";
             
-            // รีเซ็ต Score และ Runner Scores UI
+            // Reset Score and Runner Scores UI
             document.getElementById('score-text').innerText = "Level 1 - Lap 0 | รวม 0 รอบ | 0 ม."; 
             
             if (!keepScores) {
@@ -1128,7 +1151,6 @@
                 document.getElementById('totalSets').value = 1;
                 testSets.total = 1;
                 document.getElementById('currentSetDisplay').innerText = `ชุดปัจจุบัน: 1`;
-                document.getElementById('pdf-export-btn').style.display = 'none';
             }
 
             renderRunnerScores(); 
@@ -1139,6 +1161,14 @@
             document.getElementById('status-text').innerText = "Ready to Start";
             document.getElementById('status-text').style.color = "var(--text-main)";
             document.getElementById('progress-fill').style.width = "0%";
+            
+            // Ensure buttons are reset to 'Ready to Start' state
+            document.getElementById('start-btn').style.display = 'inline-block';
+            document.getElementById('start-btn').innerText = 'START TEST';
+            document.getElementById('reset-btn').style.display = 'none';
+            document.getElementById('pause-btn').style.display = 'none';
+            document.getElementById('next-set-btn').style.display = 'none';
+            toggleButtonsState(); // Final button check
             
             closeModal(); 
         }
@@ -1158,12 +1188,6 @@
 
             const { jsPDF } = window.jspdf;
             
-            // Set up a custom font configuration for Thai characters if needed (advanced)
-            // For simplicity, we stick to default fonts (Helvetica) which usually support Latin/numbers well. 
-            // Thai font support in jsPDF requires extra steps (adding font files).
-
-            const doc = new jsPDF();
-            
             const today = new Date().toISOString().slice(0, 10);
             const filename = `PACER_Scores_${today}.pdf`;
 
@@ -1180,7 +1204,7 @@
             doc.setFontSize(10);
             doc.setFont("Helvetica", "normal");
             doc.text(`วันที่ส่งออก: ${today}`, padding, y);
-            doc.text(`จำนวนชุดที่ทดสอบ: ${testSets.total}`, 100, y);
+            doc.text(`จำนวนชุดที่บันทึก: ${testSets.total}`, 100, y); // Should count sets with recorded scores
             y += lineHeight * 2;
 
             // --- Content ---
@@ -1209,7 +1233,7 @@
                     y += lineHeight;
                     doc.setFont("Helvetica", "bold");
                     doc.setFontSize(12);
-                    doc.text(`--- ชุดการทดสอบที่ ${data.set} (${data.set}/${testSets.total}) ---`, padding, y);
+                    doc.text(`--- ชุดการทดสอบที่ ${data.set} (Set ${data.set}/${testSets.total}) ---`, padding, y);
                     y += lineHeight;
                     lastSet = data.set;
                     doc.setFont("Helvetica", "normal");
@@ -1257,22 +1281,25 @@
             setupRunnerButtons();
             // Initialize current set display
             document.getElementById('currentSetDisplay').innerText = `ชุดปัจจุบัน: ${testSets.current}`;
-        };
-        
-        // Ensure the font toggle function is defined outside of window.onload
-        if (typeof toggleFont === 'undefined') {
-            function toggleFont() {
-                // Basic implementation for safety
-                const body = document.body;
-                if (body.style.fontFamily.includes('Prompt')) {
-                    body.style.fontFamily = `'Sarabun', sans-serif`;
-                    document.getElementById('font-btn').innerText = 'เปลี่ยนฟอนต์: Sarabun';
-                } else {
-                    body.style.fontFamily = `'Prompt', sans-serif`;
-                    document.getElementById('font-btn').innerText = 'เปลี่ยนฟอนต์: Prompt';
+            // Set initial display to 0 for Laps/Distance
+            document.getElementById('cum-display').innerText = "0";
+            document.getElementById('dist-display').innerText = "0";
+            document.getElementById('score-text').innerText = "Level 1 - Lap 0 | รวม 0 รอบ | 0 ม.";
+            
+            // Ensure font toggle function is accessible
+            if (typeof window.toggleFont === 'undefined') {
+                window.toggleFont = function() {
+                    const body = document.body;
+                    if (body.style.fontFamily.includes('Prompt')) {
+                        body.style.fontFamily = `'Sarabun', sans-serif`;
+                        document.getElementById('font-btn').innerText = 'เปลี่ยนฟอนต์: Sarabun';
+                    } else {
+                        body.style.fontFamily = `'Prompt', sans-serif`;
+                        document.getElementById('font-btn').innerText = 'เปลี่ยนฟอนต์: Prompt';
+                    }
                 }
             }
-        }
+        };
     </script>
 </body>
 </html>
