@@ -5,9 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PACER Test Timer (AI Powered)</title>
     
+    <!-- Import Google Fonts: Prompt and Sarabun -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;600;700&family=Sarabun:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <!-- Import jsPDF Library for PDF generation (kept but no longer used for core export) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
     <style>
@@ -441,6 +443,55 @@
             white-space: pre-wrap;
             color: #333;
         }
+        
+        /* NEW: Print Media Queries for Ctrl+P like output */
+        @media print {
+            body {
+                background: none;
+                margin: 0;
+                padding: 0;
+            }
+            .container {
+                box-shadow: none;
+                padding: 10mm; /* Add internal padding for printing */
+                width: auto;
+                max-width: none;
+            }
+            /* Hide non-essential interactive elements */
+            .settings-group,
+            .set-input-group input, /* Hide only the input box, keep the label */
+            .score-buttons-container,
+            .button-group,
+            .progress-bar,
+            .next-beep-box,
+            #ai-modal {
+                display: none !important;
+            }
+            /* Adjust layout for print */
+            .display-grid {
+                grid-template-columns: repeat(5, 1fr) !important; /* Force 5 columns */
+                gap: 5px;
+                margin-bottom: 20px;
+            }
+            .stat-box {
+                border: 1px solid #ccc;
+                padding: 10px;
+                background-color: #fff;
+            }
+            /* Ensure results list looks clean */
+            .results-list li {
+                border-bottom: 1px solid #ccc;
+                page-break-inside: avoid; /* Avoid breaking list items across pages */
+            }
+            h1 {
+                margin-top: 0;
+            }
+            /* Ensure the display elements retain their styles */
+            .score-display {
+                box-shadow: none;
+                border: 1px solid #c8e6c9;
+            }
+        }
     </style>
 </head>
 <body>
@@ -452,6 +503,7 @@
 
         <h1>PACER Test Timer</h1>
         
+        <!-- Test Set Input (Start) -->
         <div class="set-input-group">
             <label for="totalSets">จำนวนชุดการทดสอบ:</label>
             <input type="number" id="totalSets" value="1" min="1" onchange="updateTotalSets(this.value); toggleButtonsState();" oninput="toggleButtonsState()">
@@ -489,16 +541,19 @@
 
         <div class="timer-display">Total Time: <span id="total-time">00:00</span></div>
         
+        <!-- ส่วนแสดงคะแนนสำหรับจดบันทึก -->
         <div class="score-display">
             บันทึกผล (Score): <span id="score-text">Level 1 - Lap 0 | รวม 0 รอบ | 0 ม.</span>
         </div>
         
         <div class="status-text" id="status-text">Ready to Start</div>
         
+        <!-- Runner Score Buttons -->
         <div class="score-buttons-container">
-            <div class="score-label-btn">บันทึกผลผู้ทดสอบ: (กดเพื่อบันทึกคะแนนปัจจุบัน)</div>
+            <div class="score-label-btn">บันทึกผลผู้ทดสอบ: (กดเพื่อบันทึก/ยกเลิกคะแนนปัจจุบัน)</div>
             <div id="runner-buttons" class="runner-buttons-grid">
-                </div>
+                <!-- Buttons 1-10 will be generated here by JS -->
+            </div>
         </div>
 
         <div class="progress-bar">
@@ -509,14 +564,18 @@
             <button id="start-btn" class="action-btn" onclick="startTest()">START TEST</button>
             <button id="pause-btn" class="action-btn" onclick="togglePause()" style="display: none; background-color: var(--pause-color); box-shadow: 0 4px 15px rgba(243, 156, 18, 0.3);">PAUSE</button>
             
+            <!-- ปุ่มจบชุดการทดสอบ/เริ่มชุดต่อไปแบบ Manual -->
             <button id="next-set-btn" class="action-btn end-set-btn" onclick="finishTestAndAdvance()" style="display: none;">▶️ เริ่มชุดต่อไป (Manual)</button>
 
             <button id="reset-btn" class="action-btn" onclick="resetTest()" style="display: none; background-color: #e74c3c; box-shadow: 0 4px 15px rgba(231, 76, 60, 0.3);">RESET ALL</button>
             
+            <!-- ปุ่มวิเคราะห์ผลด้วย AI จะแสดงเมื่อมีคะแนนบันทึกแล้ว -->
             <button id="analyze-btn" class="action-btn analyze-btn" onclick="analyzePerformance()" style="display: none;">✨ วิเคราะห์ผล (AI)</button>
+            <!-- NEW: PDF Export Button -->
             <button id="pdf-export-btn" class="action-btn analyze-btn" onclick="exportToPDF()" style="display: none;">⬇️ ส่งออกเป็น PDF</button>
         </div>
         
+        <!-- Saved Results Display -->
         <div class="saved-results-container">
             <h2 class="results-title">ผลการบันทึก:</h2>
             <ul id="saved-results-list" class="results-list">
@@ -525,6 +584,7 @@
         </div>
     </div>
 
+    <!-- AI Modal -->
     <div class="modal-overlay" id="ai-modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -532,7 +592,8 @@
                 <button class="modal-close" onclick="closeModal()">&times;</button>
             </div>
             <div id="ai-content" class="ai-result">
-                </div>
+                <!-- Content will be injected here -->
+            </div>
         </div>
     </div>
 
@@ -545,7 +606,7 @@
             const maxRetries = 3;
             for (let i = 0; i < maxRetries; i++) {
                 try {
-                    // Using a dummy endpoint if apiKey is empty for development purposes
+                    // Using a dummy response if apiKey is empty for development purposes
                     if (apiKey === "") {
                          return new Promise(resolve => setTimeout(() => {
                             resolve(`
@@ -606,7 +667,6 @@
 
         // Feature: Analyze Performance
         async function analyzePerformance() {
-            // ใช้คะแนนสะสมรวมที่แสดงอยู่เป็นหลัก (ซึ่งตอนนี้คือ totalCumulativeLaps)
             const completedLaps = totalCumulativeLaps; 
 
             if (completedLaps <= 1) { 
@@ -640,8 +700,7 @@
         };
         let currentLevelIndex = 0;
         let currentShuttleCount = 0;
-        // ปรับแก้: totalCumulativeLaps จะนับรอบที่ *เสร็จสิ้น* แล้ว (0 เริ่มต้น)
-        let totalCumulativeLaps = 0; 
+        let totalCumulativeLaps = 0; // รอบที่เสร็จสมบูรณ์แล้ว
         
         let isRunning = false;
         let isPaused = false;
@@ -650,23 +709,35 @@
         let shuttleStartTime = 0;
         let shuttleDuration = 0;
         let pauseStartTimestamp = 0;
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        let audioCtx = null;
 
 
-        // NEW: Function to toggle font
+        function initAudio() {
+             if (!audioCtx) {
+                 audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+             }
+        }
+
+        let thaiVoice = null;
+        speechSynthesis.onvoiceschanged = () => {
+             const voices = speechSynthesis.getVoices();
+             thaiVoice = voices.find(v => v.lang === 'th-TH') || null;
+        };
+
         function toggleFont() {
-            if (currentFont === 'Prompt') {
-                document.body.style.fontFamily = `'Sarabun', sans-serif`;
-                document.getElementById('font-btn').innerText = 'เปลี่ยนฟอนต์: Sarabun';
+            const body = document.body;
+            const btn = document.getElementById('font-btn');
+            if (body.style.fontFamily.includes('Prompt')) {
+                body.style.fontFamily = `'Sarabun', sans-serif`;
+                btn.innerText = 'เปลี่ยนฟอนต์: Sarabun';
                 currentFont = 'Sarabun';
             } else {
-                document.body.style.fontFamily = `'Prompt', sans-serif`;
-                document.getElementById('font-btn').innerText = 'เปลี่ยนฟอนต์: Prompt';
+                body.style.fontFamily = `'Prompt', sans-serif`;
+                btn.innerText = 'เปลี่ยนฟอนต์: Prompt';
                 currentFont = 'Prompt';
             }
         }
 
-        // NEW: Function to update total sets and enforce minimum 1
         function updateTotalSets(value) {
             const total = parseInt(value);
             if (total >= 1) {
@@ -677,34 +748,28 @@
             }
         }
         
-        // NEW: Function to disable/enable Total Sets input and update PDF/AI button visibility
         function toggleButtonsState() {
              const input = document.getElementById('totalSets');
              const hasRecordedScores = Object.keys(testSets.data).length > 0;
-             const isFinished = !isRunning && (totalCumulativeLaps > 0 || hasRecordedScores);
              
              input.disabled = isRunning;
 
-             // แสดงปุ่ม PDF และ AI เมื่อมีการบันทึกคะแนนแล้ว
              document.getElementById('pdf-export-btn').style.display = hasRecordedScores ? 'inline-block' : 'none';
-             document.getElementById('analyze-btn').style.display = hasRecordedScores ? 'inline-block' : 'none';
+             document.getElementById('analyze-btn').style.display = hasRecordedScores && !isRunning ? 'inline-block' : 'none';
 
-             // แสดงปุ่ม Next Set เมื่อกำลังวิ่งอยู่ หรือ หยุดชั่วคราว
              const nextSetBtn = document.getElementById('next-set-btn');
              nextSetBtn.style.display = (isRunning || isPaused) ? 'inline-block' : 'none';
 
-             // ซ่อนปุ่ม Reset/Pause และแสดงปุ่ม Start เมื่อหยุดนิ่ง
              document.getElementById('start-btn').style.display = !isRunning && !isPaused ? 'inline-block' : 'none';
-             document.getElementById('reset-btn').style.display = isRunning || isPaused ? 'inline-block' : 'none';
+             document.getElementById('reset-btn').style.display = isRunning || isPaused || hasRecordedScores ? 'inline-block' : 'none';
              document.getElementById('pause-btn').style.display = isRunning || isPaused ? 'inline-block' : 'none';
         }
 
 
-        // NEW: Function to forcefully end current set and advance/finish
         function finishTestAndAdvance() {
-            if (!isRunning && !isPaused) return; // Only allow when running or paused
+            if (!isRunning && !isPaused) return; 
             
-            finishTest(true); // Pass true to indicate manual finish/advance
+            finishTest(true); 
         }
         
         // --- Scoring and Display Logic ---
@@ -712,65 +777,70 @@
         function getFormattedScore(totalCompleted) {
             if (totalCompleted <= 0) return "Level 1 - Lap 0";
             
-            let remaining = totalCompleted;
-            let lvl = 0;
-            while (lvl < pacerData.length) {
-                const currentLevelShuttles = pacerData[lvl].shuttles;
-                if (remaining <= currentLevelShuttles) {
-                    return `Level ${pacerData[lvl].level} - Lap ${remaining}`;
+            for (let i = pacerData.length - 1; i >= 0; i--) {
+                const prevCum = (i > 0) ? pacerData[i-1].cumulative : 0;
+                
+                if (totalCompleted > prevCum) {
+                    const level = pacerData[i].level;
+                    const lap = totalCompleted - prevCum;
+                    return `Level ${level} - Lap ${lap}`;
                 }
-                remaining -= currentLevelShuttles;
-                lvl++;
             }
-            // Should only happen if completed all levels (e.g. 21) + 1
-            return "Max Level Completed"; 
+            
+            if (totalCompleted === 1) return "Level 1 - Lap 1";
+            
+            return "Test Completed / Invalid Score";
         }
 
+
         function saveRunnerScore(runnerId) {
-            // ปรับแก้: คะแนนคือ totalCumulativeLaps (รวมรอบปัจจุบันที่วิ่งเสร็จแล้ว)
-            const completedLaps = totalCumulativeLaps; 
-            
-            if (completedLaps <= 0) { 
-                const statusText = document.getElementById('status-text').innerText;
-                document.getElementById('status-text').innerText = "⚠️ Error: ต้องเริ่มวิ่ง (ปี๊บแรก) ก่อนบันทึกคะแนน";
-                document.getElementById('status-text').style.color = "#e74c3c";
-                setTimeout(() => {
-                    if (document.getElementById('status-text').innerText.includes("⚠️ Error")) {
-                        document.getElementById('status-text').innerText = isPaused ? "PAUSED" : (isRunning ? "Running..." : "Ready to Start");
-                        document.getElementById('status-text').style.color = isPaused ? "#f39c12" : "var(--text-main)";
-                    }
-                }, 3000);
-                return;
-            }
-
-            const levelLapStr = getFormattedScore(completedLaps);
-            const distance = completedLaps * 20;
-            const distStr = distance.toLocaleString();
             const uniqueKey = `${testSets.current}-${runnerId}`;
-
-            testSets.data[uniqueKey] = {
-                runnerId: runnerId,
-                set: testSets.current,
-                score: completedLaps,
-                levelLap: levelLapStr,
-                distance: distStr,
-                time: document.getElementById('total-time').innerText
-            };
-
-            // Mark the button as recorded
             const btn = document.querySelector(`.runner-buttons-grid .runner-id-${runnerId}`);
-            if (btn) {
-                btn.classList.add('recorded');
-                btn.innerText = `#${runnerId} (${completedLaps})`; // Show actual score
+
+            if (testSets.data[uniqueKey]) {
+                // Case 1: Already recorded -> Unrecord (Toggle OFF)
+                delete testSets.data[uniqueKey];
+                
+                // Note: The UI for the button will be updated in renderRunnerScores
+            } else {
+                // Case 2: Not recorded -> Record (Toggle ON)
+                const completedLaps = totalCumulativeLaps; 
+                
+                if (completedLaps <= 0) { 
+                    const statusText = document.getElementById('status-text').innerText;
+                    document.getElementById('status-text').innerText = "⚠️ Error: ต้องเริ่มวิ่ง (ปี๊บแรก) ก่อนบันทึกคะแนน";
+                    document.getElementById('status-text').style.color = "#e74c3c";
+                    setTimeout(() => {
+                        if (document.getElementById('status-text').innerText.includes("⚠️ Error")) {
+                            document.getElementById('status-text').innerText = isPaused ? "PAUSED" : (isRunning ? "Running..." : "Ready to Start");
+                            document.getElementById('status-text').style.color = isPaused ? "#f39c12" : "var(--text-main)";
+                        }
+                    }, 3000);
+                    return;
+                }
+
+                const levelLapStr = getFormattedScore(completedLaps);
+                const distance = completedLaps * 20;
+                const distStr = distance.toLocaleString();
+
+                testSets.data[uniqueKey] = {
+                    runnerId: runnerId,
+                    set: testSets.current,
+                    score: completedLaps,
+                    levelLap: levelLapStr,
+                    distance: distStr,
+                    time: document.getElementById('total-time').innerText
+                };
             }
             
+            // Re-render UI after adding or deleting data
             renderRunnerScores();
-            toggleButtonsState(); // Update PDF/AI buttons visibility
+            toggleButtonsState(); // Update PDF/AI buttons visibility based on data count
         }
         
         function renderRunnerScores() {
             const list = document.getElementById('saved-results-list');
-            list.innerHTML = ''; // Clear existing list
+            list.innerHTML = ''; 
             
             const recordedScores = Object.keys(testSets.data)
                 .map(key => ({ key, data: testSets.data[key] }))
@@ -783,19 +853,25 @@
 
             if (recordedScores.length === 0) {
                 list.innerHTML = '<li>ยังไม่มีการบันทึกผลผู้ทดสอบ</li>';
-                // Also clear button states if no scores exist (should only happen on full reset)
+                // Clear all button states if no scores exist
                 document.querySelectorAll('.runner-score-btn').forEach(btn => {
-                    const runnerId = btn.className.match(/runner-id-(\d+)/)[1];
                     btn.classList.remove('recorded');
+                    const runnerId = btn.className.match(/runner-id-(\d+)/)[1];
                     btn.innerText = `#${runnerId}`;
                 });
                 return;
             }
 
             let lastSet = 0;
+            document.querySelectorAll('.runner-score-btn').forEach(btn => {
+                 btn.classList.remove('recorded');
+                 const runnerId = btn.className.match(/runner-id-(\d+)/)[1];
+                 btn.innerText = `#${runnerId}`;
+            });
+
+
             recordedScores.forEach(({ data }) => {
                 if (data.set !== lastSet) {
-                    // New Set Header
                     const setHeader = document.createElement('li');
                     setHeader.className = 'results-title';
                     setHeader.style.marginTop = lastSet === 0 ? '0' : '15px';
@@ -816,7 +892,7 @@
                 `;
                 list.appendChild(listItem);
                 
-                // Update the button for the CURRENT set with the LATEST score
+                // Update the button for the CURRENT set
                 if (data.set === testSets.current) {
                     const btn = document.querySelector(`.runner-buttons-grid .runner-id-${data.runnerId}`);
                     if (btn) {
@@ -826,16 +902,6 @@
                 }
             });
             
-            // Unmark buttons in the current set that haven't been recorded in this set
-            document.querySelectorAll('.runner-score-btn').forEach(btn => {
-                const runnerId = btn.className.match(/runner-id-(\d+)/)[1];
-                const uniqueKey = `${testSets.current}-${runnerId}`;
-                
-                if (!testSets.data[uniqueKey]) {
-                    btn.classList.remove('recorded');
-                    btn.innerText = `#${runnerId}`;
-                }
-            });
         }
         
         function setupRunnerButtons() {
@@ -848,7 +914,6 @@
                 btn.setAttribute('onclick', `saveRunnerScore(${i})`);
                 grid.appendChild(btn);
             }
-            // Re-render scores to load existing scores for the current set
             renderRunnerScores();
         }
 
@@ -858,19 +923,16 @@
             document.getElementById('level-display').innerText = currentData.level;
             document.getElementById('speed-display').innerText = currentData.speed.toFixed(1);
             
-            // Shuttle display should show current shuttle number (1-N)
             document.getElementById('shuttle-display').innerText = currentShuttleCount + 1;
             
-            // Cumulative laps is now total completed shuttles
             document.getElementById('cum-display').innerText = totalCumulativeLaps; 
             
-            // Distance calculation: Total completed laps * 20m.
             const distance = totalCumulativeLaps * 20;
             document.getElementById('dist-display').innerText = distance.toLocaleString();
             
             const completedLaps = totalCumulativeLaps;
             const levelLapStr = getFormattedScore(completedLaps);
-            const distStr = (completedLaps * 20).toLocaleString();
+            const distStr = distance.toLocaleString();
             
             document.getElementById('score-text').innerText = `${levelLapStr} | รวม ${completedLaps} รอบ | ${distStr} ม.`;
         }
@@ -885,58 +947,70 @@
         // --- Core PACER Logic ---
 
         function playTone() {
-            if (audioCtx.state === 'suspended') {
-                audioCtx.resume();
-            }
-            const oscillator = audioCtx.createOscillator();
-            const gainNode = audioCtx.createGain();
+            if (!audioCtx) return;
+            if (audioCtx.state === 'suspended') audioCtx.resume();
 
-            oscillator.connect(gainNode);
-            gainNode.connect(audioCtx.destination);
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
 
-            oscillator.type = 'sine';
-            oscillator.frequency.setValueAtTime(600, audioCtx.currentTime);
-            gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
 
-            oscillator.start();
-            oscillator.stop(audioCtx.currentTime + 0.8);
+            osc.frequency.value = 600;
+            gain.gain.value = 0.5;
+
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.7);
         }
 
         function speak(text) {
-            if ('speechSynthesis' in window) {
-                window.speechSynthesis.cancel();
-                const utterance = new SpeechSynthesisUtterance(text);
-                utterance.lang = 'th-TH'; 
-                const voices = window.speechSynthesis.getVoices();
-                let selectedVoice = voices.find(v => v.lang === 'th-TH' && (v.name.includes('Narisa') || v.name.includes('Female') || v.name.includes('Google')));
-                if (!selectedVoice) selectedVoice = voices.find(v => v.lang === 'th-TH');
+             if (!('speechSynthesis' in window)) return;
 
-                utterance.rate = 1.0;  
-                utterance.pitch = 1.2; 
-                
-                if (selectedVoice) {
-                    utterance.voice = selectedVoice;
+             speechSynthesis.cancel();
+             const u = new SpeechSynthesisUtterance(text);
+             u.lang = 'th-TH';
+             u.rate = 1.0;
+             u.pitch = 1.2;
+             if (thaiVoice) u.voice = thaiVoice;
+
+             speechSynthesis.speak(u);
+        }
+        
+        function startInterval() {
+            timerInterval = setInterval(() => {
+                if (isPaused) return; 
+
+                const now = Date.now();
+                const totalElapsed = now - startTime;
+                document.getElementById('total-time').innerText = formatTime(totalElapsed);
+
+                const shuttleElapsed = (now - shuttleStartTime) / 1000;
+                const remaining = shuttleDuration - shuttleElapsed;
+
+                if (remaining <= 0) {
+                    nextShuttle();
+                } else {
+                    document.getElementById('countdown-display').innerText = remaining.toFixed(2);
+                    const percent = (shuttleElapsed / shuttleDuration) * 100;
+                    document.getElementById('progress-fill').style.width = `${percent}%`;
                 }
-                window.speechSynthesis.speak(utterance);
-            }
+            }, 20);
         }
 
         function startTest() {
             if (isRunning) return;
             
-            // Disable Total Sets input
+            initAudio();
             toggleButtonsState();
 
             if (audioCtx.state === 'suspended') {
                 audioCtx.resume();
             }
 
-            // Hide action buttons during countdown
             document.getElementById('start-btn').style.display = 'none';
             document.getElementById('reset-btn').style.display = 'none'; 
             document.getElementById('pause-btn').style.display = 'none';
             document.getElementById('next-set-btn').style.display = 'none';
-            // Keep PDF/AI hidden until test starts (already handled by toggleButtonsState)
             
             let countdown = 8;
             document.getElementById('status-text').innerText = `Starting in ${countdown}...`;
@@ -963,50 +1037,23 @@
             isRunning = true;
             isPaused = false;
             
-            // Show action buttons
-            document.getElementById('pause-btn').style.display = 'inline-block';
-            document.getElementById('reset-btn').style.display = 'inline-block';
-            document.getElementById('next-set-btn').style.display = 'inline-block'; // Show manual advance button
+            toggleButtonsState(); 
             
             document.getElementById('pause-btn').innerText = "PAUSE";
             document.getElementById('pause-btn').style.backgroundColor = 'var(--pause-color)';
             document.getElementById('status-text').innerText = "Running...";
             document.getElementById('status-text').style.color = "var(--text-main)";
             
-            // Start state
-            if (startTime === 0) { // Check if truly starting a new set
+            if (startTime === 0) { 
                  startTime = Date.now();
                  currentLevelIndex = 0;
                  currentShuttleCount = 0;
-                 totalCumulativeLaps = 0; // Starts at 0, first beep updates it to 1
+                 totalCumulativeLaps = 0;
             }
 
-            // The very first beep/shuttle setup happens here
             nextShuttle(); 
-            // The nextShuttle function increments totalCumulativeLaps, updates display, and starts the timer.
 
-            startInterval();
-        }
-
-        function startInterval() {
-            timerInterval = setInterval(() => {
-                if (isPaused) return; 
-
-                const now = Date.now();
-                const totalElapsed = now - startTime;
-                document.getElementById('total-time').innerText = formatTime(totalElapsed);
-
-                const shuttleElapsed = (now - shuttleStartTime) / 1000;
-                const remaining = shuttleDuration - shuttleElapsed;
-
-                if (remaining <= 0) {
-                    nextShuttle();
-                } else {
-                    document.getElementById('countdown-display').innerText = remaining.toFixed(2);
-                    const percent = (shuttleElapsed / shuttleDuration) * 100;
-                    document.getElementById('progress-fill').style.width = `${percent}%`;
-                }
-            }, 20);
+            startInterval(); 
         }
 
         function togglePause() {
@@ -1022,7 +1069,7 @@
                 document.getElementById('status-text').innerText = "PAUSED";
                 document.getElementById('status-text').style.color = "#f39c12";
                 
-                toggleButtonsState(); // Update button visibility
+                toggleButtonsState(); 
 
             } else {
                 isPaused = false;
@@ -1038,7 +1085,7 @@
                 document.getElementById('status-text').style.color = "var(--text-main)";
 
                 startInterval(); 
-                toggleButtonsState(); // Update button visibility
+                toggleButtonsState();
             }
         }
 
@@ -1052,74 +1099,58 @@
         }
 
         function nextShuttle() {
-            // 1. Mark the previous shuttle as completed (or the current one if it's the first beep)
             totalCumulativeLaps++; 
             
             const currentLevelData = pacerData[currentLevelIndex];
 
-            // 2. Check if a level transition is needed for the NEXT shuttle (based on the completed lap)
             currentShuttleCount++;
             
-            if (currentShuttleCount > currentLevelData.shuttles) { // Using '>' here because totalCumulativeLaps includes this completed lap
+            if (currentShuttleCount > currentLevelData.shuttles) { 
                 currentLevelIndex++;
-                currentShuttleCount = 1; // Reset shuttle count for the new level
+                currentShuttleCount = 1; 
 
                 if (currentLevelIndex >= pacerData.length) {
-                    finishTest(); // Test finished naturally by max level
+                    finishTest(); 
                     return;
                 }
 
                 playTone();
                 document.getElementById('status-text').innerText = `Level ${pacerData[currentLevelIndex].level} Started!`;
             } else {
-                // Not a level change, just a turn-around beep
                 playTone();
                 document.getElementById('status-text').innerText = "Turn Around & Run!";
             }
 
-            // 3. Prepare for the next shuttle
             startShuttle();
         }
 
-        // isManualFinish: true if user clicks "Start Next Set" button
         function finishTest(isManualFinish = false) {
             clearInterval(timerInterval);
             isRunning = false;
-            
-            // Re-enable Total Sets input and show final buttons
-            // toggleButtonsState will be called inside startNextSet/resetTest, so we don't need it here unless it's the final set.
             
             document.getElementById('status-text').style.color = "var(--text-main)";
             document.getElementById('countdown-display').innerText = "0.00";
             document.getElementById('progress-fill').style.width = "100%";
             
-            // The score displayed is the final cumulative score
             updateDisplay(); 
             
             playTone();
             playTone();
             
             if (testSets.current < testSets.total && (isManualFinish || currentLevelIndex >= pacerData.length)) {
-                // Advance to next set
                 testSets.current++;
-                resetTest(true); // Reset timer state but keep the main data
+                resetTest(true); 
                 document.getElementById('currentSetDisplay').innerText = `ชุดปัจจุบัน: ${testSets.current}`;
                 document.getElementById('status-text').innerText = "พร้อมสำหรับชุดต่อไป!";
-                // Re-setup buttons to remove 'recorded' state for the new set
                 setupRunnerButtons(); 
             } else {
-                // All sets completed or forced manual finish on the final set
                 document.getElementById('status-text').innerText = "Test Completed! (ชุดปัจจุบันจบแล้ว)";
                 
-                // Show final options when test ends
-                document.getElementById('start-btn').style.display = 'inline-block';
-                document.getElementById('start-btn').innerText = 'START NEW SET (or RESET ALL)';
-                document.getElementById('reset-btn').style.display = 'inline-block';
+                document.getElementById('start-btn').innerText = 'START NEW TEST';
                 document.getElementById('pause-btn').style.display = 'none';
                 document.getElementById('next-set-btn').style.display = 'none';
                 
-                // Final button visibility based on recorded scores
-                toggleButtonsState();
+                toggleButtonsState(); 
             }
         }
 
@@ -1129,20 +1160,17 @@
             isPaused = false;
             currentLevelIndex = 0;
             currentShuttleCount = 0;
-            totalCumulativeLaps = 0; // Starts at 0
+            totalCumulativeLaps = 0; 
             startTime = 0; 
             
-            // Re-enable Total Sets input
             toggleButtonsState();
 
-            // Reset display values
             document.getElementById('level-display').innerText = "1";
             document.getElementById('shuttle-display').innerText = "1";
             document.getElementById('speed-display').innerText = "8.5";
-            document.getElementById('cum-display').innerText = "0"; // Display 0
+            document.getElementById('cum-display').innerText = "0"; 
             document.getElementById('dist-display').innerText = "0";
             
-            // Reset Score and Runner Scores UI
             document.getElementById('score-text').innerText = "Level 1 - Lap 0 | รวม 0 รอบ | 0 ม."; 
             
             if (!keepScores) {
@@ -1162,92 +1190,27 @@
             document.getElementById('status-text').style.color = "var(--text-main)";
             document.getElementById('progress-fill').style.width = "0%";
             
-            // Ensure buttons are reset to 'Ready to Start' state
             document.getElementById('start-btn').style.display = 'inline-block';
             document.getElementById('start-btn').innerText = 'START TEST';
-            document.getElementById('reset-btn').style.display = 'none';
             document.getElementById('pause-btn').style.display = 'none';
             document.getElementById('next-set-btn').style.display = 'none';
-            toggleButtonsState(); // Final button check
+            toggleButtonsState(); 
             
             closeModal(); 
         }
         
-        // --- PDF Export Logic ---
+        // --- PDF Export Logic (UPDATED TO USE window.print()) ---
         function exportToPDF() {
-            if (Object.keys(testSets.data).length === 0) {
-                showModal("ไม่พบข้อมูลคะแนนที่บันทึกไว้ กรุณาบันทึกผลการทดสอบก่อนส่งออกเป็น PDF", false);
-                return;
-            }
-
-            // Ensure jsPDF library is loaded
-            if (typeof window.jspdf === 'undefined' || typeof window.jspdf.jsPDF === 'undefined') {
-                showModal("กำลังโหลดไลบรารีส่งออก PDF... กรุณาลองใหม่อีกครั้งใน 2-3 วินาที", false);
-                return;
-            }
-
-            const { jsPDF } = window.jspdf;
-            
-            const today = new Date().toISOString().slice(0, 10);
-            const filename = `PACER_Scores_${today}.pdf`;
-
-            let y = 10;
-            const lineHeight = 7;
-            const padding = 10;
-            
-            // --- Title ---
-            doc.setFont("Helvetica", "bold");
-            doc.setFontSize(16);
-            doc.text("PACER Test Score Summary (บันทึกผลการทดสอบ)", padding, y);
-            y += lineHeight;
-
-            doc.setFontSize(10);
-            doc.setFont("Helvetica", "normal");
-            doc.text(`วันที่ส่งออก: ${today}`, padding, y);
-            doc.text(`จำนวนชุดที่บันทึก: ${testSets.total}`, 100, y); // Should count sets with recorded scores
-            y += lineHeight * 2;
-
-            // --- Content ---
-            doc.setFontSize(10);
-            let lastSet = 0;
-            const scores = Object.keys(testSets.data)
-                .map(key => ({ key, data: testSets.data[key] }))
-                .sort((a, b) => {
-                    const [setA, idA] = a.key.split('-').map(Number);
-                    const [setB, idB] = b.key.split('-').map(Number);
-                    if (setA !== setB) return setA - setB;
-                    return idA - idB;
-                });
-
-            scores.forEach(({ data }) => {
-                // Handle new page if near bottom
-                if (y > 280) { 
-                    doc.addPage();
-                    y = padding;
-                    doc.setFont("Helvetica", "normal");
-                    doc.setFontSize(10);
-                    lastSet = 0; // Reset lastSet counter for the new page
-                }
-
-                if (data.set !== lastSet) {
-                    y += lineHeight;
-                    doc.setFont("Helvetica", "bold");
-                    doc.setFontSize(12);
-                    doc.text(`--- ชุดการทดสอบที่ ${data.set} (Set ${data.set}/${testSets.total}) ---`, padding, y);
-                    y += lineHeight;
-                    lastSet = data.set;
-                    doc.setFont("Helvetica", "normal");
-                    doc.setFontSize(10);
-                }
-
-                // Construct line with simplified score details
-                const scoreLine = `Runner #${data.runnerId} (Set ${data.set}): ${data.levelLap} | Total Laps: ${data.score} | Distance: ${data.distance} m | Time: ${data.time}`;
-                
-                doc.text(scoreLine, padding, y);
-                y += lineHeight;
-            });
-
-            doc.save(filename);
+             if (Object.keys(testSets.data).length === 0) {
+                 showModal("ไม่พบข้อมูลคะแนนที่บันทึกไว้ กรุณาบันทึกผลการทดสอบก่อนส่งออกเป็น PDF", false);
+                 return;
+             }
+             
+             // Calls the native browser print/save dialog (like Ctrl+P)
+             window.print();
+             
+             // Note: The custom filename logic is no longer possible with window.print(),
+             // but the result will accurately reflect the screen content for easy saving.
         }
 
         // --- Data Definitions ---
@@ -1275,30 +1238,22 @@
             { level: 21, shuttles: 15, seconds: 3.89, speed: 18.5 }
         ];
 
+        let cumulativeLapsTotalPacer = 0;
+        pacerData.forEach(data => {
+            cumulativeLapsTotalPacer += data.shuttles;
+            data.cumulative = cumulativeLapsTotalPacer;
+        });
         
         // Initial setup for the 10 buttons when the page loads
         window.onload = function() {
             setupRunnerButtons();
-            // Initialize current set display
             document.getElementById('currentSetDisplay').innerText = `ชุดปัจจุบัน: ${testSets.current}`;
-            // Set initial display to 0 for Laps/Distance
             document.getElementById('cum-display').innerText = "0";
             document.getElementById('dist-display').innerText = "0";
             document.getElementById('score-text').innerText = "Level 1 - Lap 0 | รวม 0 รอบ | 0 ม.";
             
-            // Ensure font toggle function is accessible
-            if (typeof window.toggleFont === 'undefined') {
-                window.toggleFont = function() {
-                    const body = document.body;
-                    if (body.style.fontFamily.includes('Prompt')) {
-                        body.style.fontFamily = `'Sarabun', sans-serif`;
-                        document.getElementById('font-btn').innerText = 'เปลี่ยนฟอนต์: Sarabun';
-                    } else {
-                        body.style.fontFamily = `'Prompt', sans-serif`;
-                        document.getElementById('font-btn').innerText = 'เปลี่ยนฟอนต์: Prompt';
-                    }
-                }
-            }
+            // Re-bind the external toggleFont function to the window
+            window.toggleFont = toggleFont;
         };
     </script>
 </body>
