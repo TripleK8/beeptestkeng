@@ -11,7 +11,8 @@
     -->
     <script src="jspdf.umd.min.js"></script> 
     <script>
-        if (typeof window.jspdf === 'undefined') {
+        // Fallback for jsPDF
+        if (typeof window.jspdf === 'undefined' || typeof window.jspdf.jsPDF === 'undefined') {
             document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"><\/script>');
         }
     </script>
@@ -44,6 +45,7 @@
             justify-content: center;
             min-height: 100vh;
             margin: 0;
+            padding: 20px;
         }
 
         .container {
@@ -521,7 +523,51 @@
             line-height: 1.6;
             color: #333;
         }
-        /* Media Print (CSS omitted for brevity, but retained in the file) */
+
+        .modal-input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            margin-top: 10px;
+            box-sizing: border-box;
+            font-size: 16px;
+        }
+
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .modal-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.2s;
+        }
+
+        .modal-confirm-btn {
+            background-color: #e74c3c;
+            color: white;
+        }
+
+        .modal-confirm-btn:hover {
+            background-color: #c0392b;
+        }
+
+        .modal-cancel-btn {
+            background-color: #ecf0f1;
+            color: var(--text-main);
+        }
+
+        .modal-cancel-btn:hover {
+            background-color: #bdc3c7;
+        }
+        /* End Modal Styles */
     </style>
 </head>
 <body>
@@ -630,15 +676,20 @@
         </div>
     </div>
 
-    <!-- Info Modal -->
-    <div class="modal-overlay" id="ai-modal">
+    <!-- Info/Password Modal -->
+    <div class="modal-overlay" id="custom-modal">
         <div class="modal-content">
             <div class="modal-header">
-                <div class="modal-title">ℹ️ แจ้งเตือน</div>
+                <div class="modal-title" id="modal-title">ℹ️ แจ้งเตือน</div>
                 <button class="modal-close" onclick="closeModal()">&times;</button>
             </div>
-            <div id="ai-content" class="modal-body">
-                <!-- Content -->
+            <div id="modal-body" class="modal-body">
+                <p id="modal-text">Content</p>
+                <!-- Dynamic input for password -->
+                <input type="password" id="modal-input" class="modal-input" placeholder="Admin Password (1234)" style="display:none;">
+            </div>
+            <div id="modal-actions" class="modal-actions">
+                <!-- Dynamic buttons -->
             </div>
         </div>
     </div>
@@ -663,6 +714,7 @@
         let shuttleDuration = 0;
         let pauseStartTimestamp = 0;
         let audioCtx = null;
+        const ADMIN_PASSWORD = "1234";
 
 
         function initAudio() {
@@ -682,27 +734,66 @@
         function toggleFont() {
             const body = document.body;
             const btn = document.getElementById('font-btn');
-            if (body.style.fontFamily.includes('Prompt')) {
-                body.style.fontFamily = `sans-serif`;
-                btn.innerText = 'เปลี่ยนฟอนต์: Default';
-                currentFont = 'Default';
-            } else {
+            // Check if current font includes 'Prompt' or is unset (which defaults to 'Prompt' via CSS)
+            if (body.style.fontFamily && body.style.fontFamily.includes('sans-serif') && !body.style.fontFamily.includes('Prompt')) {
                 body.style.fontFamily = `'Prompt', 'Sarabun', sans-serif`;
                 btn.innerText = 'เปลี่ยนฟอนต์: Prompt';
                 currentFont = 'Prompt';
+            } else {
+                body.style.fontFamily = `sans-serif`; // Revert to generic sans-serif
+                btn.innerText = 'เปลี่ยนฟอนต์: Default';
+                currentFont = 'Default';
             }
         }
 
-        function showModal(content) {
-            const modal = document.getElementById('ai-modal');
-            const contentDiv = document.getElementById('ai-content');
-            modal.style.display = 'flex';
-            contentDiv.innerText = content;
+        // --- Custom Modal Functions ---
+        function closeModal() {
+            document.getElementById('custom-modal').style.display = 'none';
+            document.getElementById('modal-input').style.display = 'none'; // Hide input on close
+            document.getElementById('modal-input').value = ''; // Clear input
         }
 
-        function closeModal() {
-            document.getElementById('ai-modal').style.display = 'none';
+        function showModal(title, message, isError = false) {
+            document.getElementById('modal-title').innerHTML = title;
+            document.getElementById('modal-title').style.color = isError ? '#e74c3c' : '#e67e22';
+            document.getElementById('modal-text').innerText = message;
+            document.getElementById('modal-input').style.display = 'none';
+            document.getElementById('modal-actions').innerHTML = `
+                <button class="modal-btn modal-cancel-btn" onclick="closeModal()">OK</button>
+            `;
+            document.getElementById('custom-modal').style.display = 'flex';
         }
+
+        function showPasswordModal(onConfirmCallback) {
+            document.getElementById('modal-title').innerHTML = '🔒 ยืนยันรหัสผ่านผู้ดูแล';
+            document.getElementById('modal-title').style.color = '#e74c3c';
+            document.getElementById('modal-text').innerText = 'กรุณาใส่รหัสผ่านเพื่อยืนยันการล้างข้อมูลทั้งหมด (1234):';
+            
+            const inputField = document.getElementById('modal-input');
+            inputField.style.display = 'block';
+            inputField.value = '';
+            
+            document.getElementById('modal-actions').innerHTML = `
+                <button class="modal-btn modal-cancel-btn" onclick="closeModal()">ยกเลิก</button>
+                <button class="modal-btn modal-confirm-btn" id="modal-confirm-action">ยืนยันการล้างข้อมูล</button>
+            `;
+            
+            document.getElementById('custom-modal').style.display = 'flex';
+            inputField.focus();
+
+            // Setup the confirmation handler dynamically
+            const confirmBtn = document.getElementById('modal-confirm-action');
+            confirmBtn.onclick = () => {
+                const password = inputField.value;
+                if (password === ADMIN_PASSWORD) {
+                    closeModal();
+                    onConfirmCallback();
+                } else {
+                    showModal('❌ ข้อผิดพลาด', 'รหัสผ่านไม่ถูกต้อง! กรุณาลองใหม่อีกครั้ง.', true);
+                }
+            };
+        }
+        // --- End Custom Modal Functions ---
 
         function updateTotalSets(value) {
             const total = parseInt(value);
@@ -967,9 +1058,12 @@
                 document.getElementById('total-time').innerText = formatTime(totalElapsed);
 
                 const shuttleElapsed = (now - shuttleStartTime) / 1000;
-                const remaining = shuttleDuration - shuttleElapsed;
+                let remaining = shuttleDuration - shuttleElapsed;
+                
+                // Ensure remaining time is not negative visually
+                remaining = Math.max(0, remaining);
 
-                if (remaining <= 0) {
+                if (remaining <= 0.02) { // Allow for a small margin of error before triggering nextShuttle
                     nextShuttle();
                 } else {
                     document.getElementById('countdown-display').innerText = remaining.toFixed(2);
@@ -1002,7 +1096,11 @@
                 if (countdown > 0) {
                     document.getElementById('status-text').innerText = `Starting in ${countdown}...`;
                     
-                    if (countdown <= 5) {
+                    if (countdown === 1) { // NEW: Add tone for the last second
+                        const thaiNumbers = ["", "หนึ่ง", "สอง", "สาม", "สี่", "ห้า"];
+                        speak(thaiNumbers[countdown]);
+                        playTone(); 
+                    } else if (countdown <= 5) {
                         const thaiNumbers = ["", "หนึ่ง", "สอง", "สาม", "สี่", "ห้า"];
                         speak(thaiNumbers[countdown]);
                     }
@@ -1033,7 +1131,7 @@
                  totalCumulativeLaps = 0;
             }
 
-            nextShuttle(); 
+            startShuttle(); 
 
             startInterval(); 
         }
@@ -1097,6 +1195,8 @@
                 }
 
                 playTone();
+                // Speak new level number
+                speak(`ระดับ ${pacerData[currentLevelIndex].level} เริ่มแล้ว`);
                 document.getElementById('status-text').innerText = `Level ${pacerData[currentLevelIndex].level} Started!`;
             } else {
                 playTone();
@@ -1120,8 +1220,10 @@
             playTone();
             
             if (testSets.current < testSets.total && (isManualFinish || currentLevelIndex >= pacerData.length)) {
+                // Advance set and prepare for the next run
+                showModal('✅ เสร็จสิ้นชุดทดสอบ', `ชุดที่ ${testSets.current} บันทึกเสร็จสิ้นแล้ว จะเริ่มต้นชุดต่อไป: ${testSets.current + 1}`, false);
                 changeSet(1); 
-                resetTest(true); 
+                performReset(true); 
                 document.getElementById('status-text').innerText = "พร้อมสำหรับชุดต่อไป!";
             } else {
                 document.getElementById('status-text').innerText = "Test Completed! (จบการทดสอบ)";
@@ -1131,17 +1233,9 @@
                 toggleButtonsState(); 
             }
         }
-
-        function resetTest(keepScores = false) {
-            // **Password Protection Logic**
-            if (!keepScores) {
-                const pwd = prompt("ยืนยันการล้างข้อมูลทั้งหมด? กรุณาใส่รหัสผ่าน (Admin):");
-                if (pwd !== "1234") {
-                    alert("รหัสผ่านไม่ถูกต้อง!");
-                    return; // Abort reset
-                }
-            }
-
+        
+        // **NEW** - Separated reset logic from confirmation
+        function performReset(keepScores = false) {
             clearInterval(timerInterval);
             isRunning = false;
             isPaused = false;
@@ -1184,6 +1278,20 @@
             
             closeModal(); 
         }
+
+        function resetTest(keepScores = false) {
+            // **Replaced prompt/alert with custom modal**
+            if (!keepScores) {
+                showPasswordModal(() => {
+                    // Password correct, proceed with full reset
+                    performReset(false);
+                    showModal('✅ ล้างข้อมูลสำเร็จ', 'ข้อมูลผลการทดสอบทั้งหมดถูกล้างเรียบร้อยแล้ว', false);
+                });
+            } else {
+                // Used for automatic reset/advance to the next set (keepScores=true)
+                performReset(true);
+            }
+        }
         
         // --- Pilot Data Generation ---
         function generatePilotData() {
@@ -1209,18 +1317,18 @@
             renderRunnerScores();
             toggleButtonsState();
             
-            alert(`สร้างข้อมูลจำลองสำหรับชุดที่ ${set} เรียบร้อยแล้ว!`);
+            showModal('🧪 ข้อมูลจำลองถูกสร้างแล้ว', `สร้างข้อมูลจำลองสำหรับชุดที่ ${set} เรียบร้อยแล้ว`, false);
         }
 
         // --- PDF Export Logic ---
         function exportToPDF() {
             if (Object.keys(testSets.data).length === 0) {
-                 showModal("ไม่พบข้อมูลคะแนนที่บันทึกไว้");
+                 showModal("⚠️ ไม่พบข้อมูล", "ไม่พบข้อมูลคะแนนที่บันทึกไว้สำหรับส่งออก", true);
                 return;
             }
             
             if (typeof window.jspdf === 'undefined' || typeof window.jspdf.jsPDF === 'undefined') {
-                 showModal("กำลังโหลด jsPDF... (หรือคุณยังไม่ได้ติดตั้งไฟล์ jspdf.umd.min.js)");
+                 showModal("⚠️ ข้อผิดพลาด jsPDF", "กำลังโหลด jsPDF... หรือไฟล์ jspdf.umd.min.js อาจไม่พร้อมใช้งาน", true);
                  return;
             }
 
@@ -1237,10 +1345,13 @@
                 filename = `PACER_Set_${currentSet}_${today}.pdf`;
             }
 
-            const doc = new jsPDF();
+            // Using A4 standard size (210 x 297 mm)
+            const doc = new jsPDF('p', 'mm', 'a4'); 
             let y = 10;
             const lineHeight = 7;
-            const padding = 10;
+            const padding = 15; // Increased padding for better appearance
+            
+            // Note: jsPDF does not natively support Thai fonts without custom font registration (which is complex/unreliable in a single-file setup). Using default Helvetica/Times.
             
             doc.setFont("Helvetica", "bold");
             doc.setFontSize(16);
@@ -1251,7 +1362,7 @@
             doc.setFont("Helvetica", "normal");
             doc.text(`Export Date: ${today}`, padding, y);
             if (!exportAll) {
-                doc.text(`Set No.: ${currentSet} of ${testSets.total}`, 100, y); 
+                doc.text(`Current Set: ${currentSet} of ${testSets.total}`, 100, y); 
             } else {
                 doc.text(`Total Test Sets: ${testSets.total}`, 100, y); 
             }
@@ -1268,7 +1379,7 @@
                 });
             
             if (scores.length === 0) {
-                showModal("ไม่พบข้อมูลคะแนนสำหรับชุดที่เลือก");
+                showModal("⚠️ ไม่พบข้อมูล", "ไม่พบข้อมูลคะแนนสำหรับชุดที่เลือก", true);
                 return;
             }
 
@@ -1305,27 +1416,27 @@
         }
 
         const pacerData = [
-            { level: 1,  shuttles: 7,  seconds: 8.47, speed: 8.5 },
-            { level: 2,  shuttles: 8,  seconds: 8.00, speed: 9.0 },
-            { level: 3,  shuttles: 8,  seconds: 7.58, speed: 9.5 },
-            { level: 4,  shuttles: 8,  seconds: 7.20, speed: 10.0 },
-            { level: 5,  shuttles: 9,  seconds: 6.86, speed: 10.5 },
-            { level: 6,  shuttles: 9,  seconds: 6.55, speed: 11.0 },
-            { level: 7,  shuttles: 10, seconds: 6.26, speed: 11.5 },
-            { level: 8,  shuttles: 10, seconds: 6.00, speed: 12.0 },
-            { level: 9,  shuttles: 10, seconds: 5.76, speed: 12.5 },
-            { level: 10, shuttles: 11, seconds: 5.54, speed: 13.0 },
-            { level: 11, shuttles: 11, seconds: 5.33, speed: 13.5 },
-            { level: 12, shuttles: 12, seconds: 5.14, speed: 14.0 },
-            { level: 13, shuttles: 12, seconds: 4.97, speed: 14.5 },
-            { level: 14, shuttles: 13, seconds: 4.80, speed: 15.0 },
-            { level: 15, shuttles: 13, seconds: 4.65, speed: 15.5 },
-            { level: 16, shuttles: 13, seconds: 4.50, speed: 16.0 },
-            { level: 17, shuttles: 14, seconds: 4.36, speed: 16.5 },
-            { level: 18, shuttles: 14, seconds: 4.24, speed: 17.0 },
-            { level: 19, shuttles: 15, seconds: 4.11, speed: 17.5 },
-            { level: 20, shuttles: 15, seconds: 4.00, speed: 18.0 },
-            { level: 21, shuttles: 15, seconds: 3.89, speed: 18.5 }
+            { level: 1,  shuttles: 7,  seconds: 8.47, speed: 8.5, cumulative: 0 }, // Init cumulative to 0, it will be calculated below
+            { level: 2,  shuttles: 8,  seconds: 8.00, speed: 9.0, cumulative: 0 },
+            { level: 3,  shuttles: 8,  seconds: 7.58, speed: 9.5, cumulative: 0 },
+            { level: 4,  shuttles: 8,  seconds: 7.20, speed: 10.0, cumulative: 0 },
+            { level: 5,  shuttles: 9,  seconds: 6.86, speed: 10.5, cumulative: 0 },
+            { level: 6,  shuttles: 9,  seconds: 6.55, speed: 11.0, cumulative: 0 },
+            { level: 7,  shuttles: 10, seconds: 6.26, speed: 11.5, cumulative: 0 },
+            { level: 8,  shuttles: 10, seconds: 6.00, speed: 12.0, cumulative: 0 },
+            { level: 9,  shuttles: 10, seconds: 5.76, speed: 12.5, cumulative: 0 },
+            { level: 10, shuttles: 11, seconds: 5.54, speed: 13.0, cumulative: 0 },
+            { level: 11, shuttles: 11, seconds: 5.33, speed: 13.5, cumulative: 0 },
+            { level: 12, shuttles: 12, seconds: 5.14, speed: 14.0, cumulative: 0 },
+            { level: 13, shuttles: 12, seconds: 4.97, speed: 14.5, cumulative: 0 },
+            { level: 14, shuttles: 13, seconds: 4.80, speed: 15.0, cumulative: 0 },
+            { level: 15, shuttles: 13, seconds: 4.65, speed: 15.5, cumulative: 0 },
+            { level: 16, shuttles: 13, seconds: 4.50, speed: 16.0, cumulative: 0 },
+            { level: 17, shuttles: 14, seconds: 4.36, speed: 16.5, cumulative: 0 },
+            { level: 18, shuttles: 14, seconds: 4.24, speed: 17.0, cumulative: 0 },
+            { level: 19, shuttles: 15, seconds: 4.11, speed: 17.5, cumulative: 0 },
+            { level: 20, shuttles: 15, seconds: 4.00, speed: 18.0, cumulative: 0 },
+            { level: 21, shuttles: 15, seconds: 3.89, speed: 18.5, cumulative: 0 }
         ];
 
         let cumulativeLapsTotalPacer = 0;
@@ -1341,7 +1452,17 @@
             document.getElementById('dist-display').innerText = "0";
             document.getElementById('score-text').innerText = "Level 1 - Lap 0 | รวม 0 รอบ | 0 ม.";
             
+            // Expose functions globally for HTML elements
             window.toggleFont = toggleFont;
+            window.updateTotalSets = updateTotalSets;
+            window.changeSet = changeSet;
+            window.startTest = startTest;
+            window.togglePause = togglePause;
+            window.finishTestAndAdvance = finishTestAndAdvance;
+            window.resetTest = resetTest;
+            window.exportToPDF = exportToPDF;
+            window.generatePilotData = generatePilotData;
+            window.closeModal = closeModal; // Ensure modal is closable
         };
     </script>
 </body>
