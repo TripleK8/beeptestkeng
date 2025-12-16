@@ -32,7 +32,7 @@
             --ai-color: #8e44ad; 
             --pilot-color: #16a085; /* สีสำหรับปุ่ม Pilot */
             --shadow: 0 4px 20px rgba(0,0,0,0.08);
-            --font-main: 'Prompt', 'Sarabun', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            --font-main: 'Sarabun', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* ฟอนต์หลัก: Sarabun */
         }
 
         body {
@@ -59,30 +59,7 @@
             position: relative;
         }
 
-        .settings-group {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-            justify-content: flex-end;
-        }
-
-        .toggle-btn {
-            background: #ecf0f1;
-            border: none;
-            padding: 8px 15px;
-            border-radius: 8px;
-            color: var(--text-main);
-            font-size: 14px;
-            cursor: pointer;
-            font-family: inherit;
-            transition: background 0.2s;
-        }
-        .toggle-btn:hover {
-            background: #dcdcdc;
-        }
+        /* ลบ CSS สำหรับ .settings-group และ .toggle-btn ออก */
         
         h1 {
             margin-bottom: 30px;
@@ -591,9 +568,7 @@
 <body>
 
     <div class="container">
-        <div class="settings-group">
-            <button class="toggle-btn" id="font-btn" onclick="toggleFont()">เปลี่ยนฟอนต์: Default</button>
-        </div>
+        <!-- ลบ settings-group และปุ่มเปลี่ยนฟอนต์ออก -->
 
         <h1>20m-SRT (Shuttle Run Test)</h1>
         
@@ -686,9 +661,6 @@
             
             <!-- PDF Export Button -->
             <button id="pdf-export-btn" class="action-btn" onclick="exportToPDF()" style="display: none;">⬇️ ส่งออกเป็น PDF</button>
-            
-            <!-- Pilot Data Button (Visible by default, hidden when running) -->
-            <button id="pilot-btn" class="action-btn pilot-btn" onclick="generatePilotData()">🧪 สร้างข้อมูลจำลอง (Pilot Data)</button>
         </div>
         
         <div class="saved-results-container">
@@ -719,7 +691,6 @@
 
     <script>
         // === State Management ===
-        let currentFont = 'Prompt';
         let testSets = {
             total: 1, 
             current: 1, 
@@ -764,21 +735,6 @@
                  const voices = speechSynthesis.getVoices();
                  thaiVoice = voices.find(v => v.lang === 'th-TH') || null;
             };
-        }
-
-        function toggleFont() {
-            const body = document.body;
-            const btn = document.getElementById('font-btn');
-            // Check if current font includes 'Prompt' or is unset (which defaults to 'Prompt' via CSS)
-            if (body.style.fontFamily && body.style.fontFamily.includes('sans-serif') && !body.style.fontFamily.includes('Prompt')) {
-                body.style.fontFamily = `'Prompt', 'Sarabun', sans-serif`;
-                btn.innerText = 'เปลี่ยนฟอนต์: Prompt';
-                currentFont = 'Prompt';
-            } else {
-                body.style.fontFamily = `sans-serif`; // Revert to generic sans-serif
-                btn.innerText = 'เปลี่ยนฟอนต์: Default';
-                currentFont = 'Default';
-            }
         }
 
         // --- Custom Modal Functions ---
@@ -884,9 +840,6 @@
              document.getElementById('start-btn').style.display = !isRunning && !isPaused ? 'inline-block' : 'none';
              document.getElementById('reset-btn').style.display = isRunning || isPaused || hasRecordedScores ? 'inline-block' : 'none';
              document.getElementById('pause-btn').style.display = isRunning || isPaused ? 'inline-block' : 'none';
-             
-             // Pilot button logic: Always visible when not running or paused
-             document.getElementById('pilot-btn').style.display = (isRunning || isPaused) ? 'none' : 'inline-block';
         }
 
 
@@ -897,6 +850,25 @@
             finishTest(true); 
         }
         
+        // NEW Helper: Get Max Speed based on completed laps
+        function getMaxSpeed(totalCompleted) {
+            if (totalCompleted <= 0) return 0.0;
+            
+            let maxSpeed = pacerData[0].speed; // Default to first level speed
+            
+            for (const data of pacerData) {
+                if (totalCompleted >= data.cumulative) {
+                    // This level was completed or passed
+                    maxSpeed = data.speed;
+                } else {
+                    // Score falls in the current level (data), but the max speed is the speed of the PREVIOUS completed level
+                    // Since we initialize with pacerData[0].speed and only update if totalCompleted >= cumulative, the last successful speed is stored in maxSpeed
+                    break;
+                }
+            }
+            return maxSpeed;
+        }
+
         function getFormattedScore(totalCompleted) {
             if (totalCompleted <= 0) return "Level 1 - Lap 0";
             
@@ -941,6 +913,7 @@
                 const levelLapStr = getFormattedScore(completedLaps);
                 const distance = completedLaps * 20;
                 const distStr = distance.toLocaleString();
+                const maxSpeed = getMaxSpeed(completedLaps); // Get MRS
 
                 testSets.data[uniqueKey] = {
                     runnerId: runnerId,
@@ -948,7 +921,8 @@
                     score: completedLaps,
                     levelLap: levelLapStr,
                     distance: distStr,
-                    time: document.getElementById('total-time').innerText
+                    time: document.getElementById('total-time').innerText,
+                    maxSpeed: maxSpeed.toFixed(1) // บันทึก MRS
                 };
             }
             
@@ -1004,6 +978,7 @@
                     <span class="runner-id">ผู้ทดสอบ #${data.runnerId}</span>
                     <span class="runner-score-detail">
                         ${data.levelLap} | รวม **${data.score}** รอบ | ${data.distance} ม. | เวลา: ${data.time}
+                        ${data.maxSpeed ? `| MRS: ${data.maxSpeed} km/h` : ''} <!-- แสดง MRS -->
                     </span>
                 `;
                 list.appendChild(listItem);
@@ -1044,8 +1019,11 @@
             const completedLaps = totalCumulativeLaps;
             const levelLapStr = getFormattedScore(completedLaps);
             const distStr = distance.toLocaleString();
+
+            const maxSpeed = getMaxSpeed(completedLaps); // Get MRS
             
-            document.getElementById('score-text').innerText = `${levelLapStr} | รวม ${completedLaps} รอบ | ${distStr} ม.`;
+            // อัปเดต score-text ให้แสดง MRS ด้วย
+            document.getElementById('score-text').innerText = `${levelLapStr} | MRS: ${maxSpeed.toFixed(1)} km/h | รวม ${completedLaps} รอบ | ${distStr} ม.`;
         }
 
         function formatTime(ms) {
@@ -1094,8 +1072,8 @@
                 document.getElementById('total-time').innerText = formatTime(totalElapsed);
 
                 const shuttleElapsed = (now - shuttleStartTime) / 1000;
-                let remaining = shuttleDuration - shuttleElapsed;
-                
+                let remaining = shuttleDuration - shuttleElapsed; 
+
                 // Ensure remaining time is not negative visually
                 remaining = Math.max(0, remaining);
 
@@ -1289,7 +1267,7 @@
             document.getElementById('speed-display').innerText = "8.5";
             document.getElementById('cum-display').innerText = "0"; 
             document.getElementById('dist-display').innerText = "0";
-            document.getElementById('score-text').innerText = "Level 1 - Lap 0 | รวม 0 รอบ | 0 ม."; 
+            document.getElementById('score-text').innerText = "Level 1 - Lap 0 | รวม 0 รอบ | 0 ม. | MRS: 0.0 km/h"; 
             
             if (!keepScores) {
                 testSets.data = {};
@@ -1331,33 +1309,6 @@
             }
         }
         
-        // --- Pilot Data Generation ---
-        function generatePilotData() {
-            const runnerCount = 10;
-            const set = testSets.current;
-            
-            for (let i = 1; i <= runnerCount; i++) {
-                const randomLaps = Math.floor(Math.random() * 55) + 5;
-                const levelLapStr = getFormattedScore(randomLaps);
-                const distance = randomLaps * 20;
-                
-                const uniqueKey = `${set}-${i}`;
-                testSets.data[uniqueKey] = {
-                    runnerId: i,
-                    set: set,
-                    score: randomLaps,
-                    levelLap: levelLapStr,
-                    distance: distance.toLocaleString(),
-                    time: "Pilot Test"
-                };
-            }
-            
-            renderRunnerScores();
-            toggleButtonsState();
-            
-            showModal('🧪 ข้อมูลจำลองถูกสร้างแล้ว', `สร้างข้อมูลจำลองสำหรับชุดที่ ${set} เรียบร้อยแล้ว`, false);
-        }
-
         // --- PDF Export Logic ---
         function exportToPDF() {
             if (Object.keys(testSets.data).length === 0) {
@@ -1393,7 +1344,7 @@
             
             doc.setFont("Helvetica", "bold");
             doc.setFontSize(16);
-            doc.text(exportAll ? "PACER Test Score Summary (All Sets)" : "PACER Test Score Summary (Single Set)", padding, y); 
+            doc.text(exportAll ? "20m-SRT Score Summary (All Sets)" : "20m-SRT Score Summary (Single Set)", padding, y); 
             y += lineHeight;
 
             doc.setFontSize(10);
@@ -1444,7 +1395,7 @@
                     doc.setFontSize(10);
                 }
 
-                const scoreLine = `Runner #${data.runnerId}: ${data.levelLap} | Total Laps: ${data.score} | Distance: ${data.distance} m | Time: ${data.time}`;
+                const scoreLine = `Runner #${data.runnerId}: ${data.levelLap} | MRS: ${data.maxSpeed || 'N/A'} km/h | Total Laps: ${data.score} | Distance: ${data.distance} m | Time: ${data.time}`;
                 
                 doc.text(scoreLine, padding, y);
                 y += lineHeight;
@@ -1480,14 +1431,17 @@
 
         
         window.onload = function() {
+            // ตั้งค่าฟอนต์เริ่มต้นเป็น Sarabun
+            document.body.style.fontFamily = `'Sarabun', sans-serif`;
+
             setupRunnerButtons();
             document.getElementById('currentSetDisplay').innerText = `1`;
             document.getElementById('cum-display').innerText = "0";
             document.getElementById('dist-display').innerText = "0";
-            document.getElementById('score-text').innerText = "Level 1 - Lap 0 | รวม 0 รอบ | 0 ม.";
+            // อัปเดตการแสดงผล MRS เริ่มต้น (0.0 km/h)
+            document.getElementById('score-text').innerText = "Level 1 - Lap 0 | MRS: 0.0 km/h | รวม 0 รอบ | 0 ม.";
             
             // Expose functions globally for HTML elements
-            window.toggleFont = toggleFont;
             window.updateTotalSets = updateTotalSets;
             window.changeSet = changeSet;
             window.startTest = startTest;
@@ -1495,7 +1449,6 @@
             window.finishTestAndAdvance = finishTestAndAdvance;
             window.resetTest = resetTest;
             window.exportToPDF = exportToPDF;
-            window.generatePilotData = generatePilotData;
             window.closeModal = closeModal; // Ensure modal is closable
         };
     </script>
