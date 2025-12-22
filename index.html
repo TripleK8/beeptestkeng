@@ -878,7 +878,8 @@
                     levelLap: getFormattedScore(totalCumulativeLaps),
                     distance: totalCumulativeLaps * 20,
                     time: document.getElementById('total-time').innerText,
-                    maxSpeed: getMaxSpeed(totalCumulativeLaps).toFixed(1)
+                    maxSpeed: getMaxSpeed(totalCumulativeLaps).toFixed(1),
+                    timestamp: Date.now() // เพิ่ม Timestamp สำหรับเรียงลำดับเวลา
                 };
             }
             renderRunnerScores();
@@ -911,10 +912,11 @@
             const list = document.getElementById('saved-results-list');
             list.innerHTML = '';
             
-            // Group and Sort
+            // Group and Sort by TIMESTAMP (Who came out first) instead of Runner ID
             let items = Object.values(testSets.data).sort((a,b) => {
                 if(a.set !== b.set) return a.set - b.set;
-                return a.runnerId - b.runnerId;
+                // เรียงตามเวลาที่กดปุ่ม (Timestamp)
+                return a.timestamp - b.timestamp;
             });
 
             if (items.length === 0) {
@@ -1017,10 +1019,11 @@
             let y = 30;
             let items = Object.values(testSets.data).filter(d => exportAll || d.set === testSets.current);
             
-            // Sort
+            // Sort by Timestamp for PDF as well
              items.sort((a,b) => {
                 if(a.set !== b.set) return a.set - b.set;
-                return a.runnerId - b.runnerId;
+                // return a.runnerId - b.runnerId; // OLD
+                return a.timestamp - b.timestamp; // NEW: Chronological
             });
 
             if(items.length === 0) {
