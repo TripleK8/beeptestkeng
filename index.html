@@ -3,17 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>20m-SRT</title>
+    <title>20m-SRT - Bluetooth Stable</title>
     
-    <!-- 
-        [โหมด Offline]
-        ใช้ฟอนต์มาตรฐานในเครื่อง และรองรับ jsPDF แบบ Local
-    -->
-    <script src="jspdf.umd.min.js"></script> 
+    <!-- PDF Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script> 
     <script>
-        // Fallback for jsPDF
-        if (typeof window.jspdf === 'undefined' || typeof window.jspdf.jsPDF === 'undefined') {
-            document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"><\/script>');
+        if (typeof window.jspdf === 'undefined') {
+            // Fallback logic if CDN fails (for offline usage reference)
+            console.warn("jsPDF not loaded from CDN");
         }
     </script>
 
@@ -29,10 +26,9 @@
             --countdown-color: #e74c3c; 
             --pause-color: #f39c12; 
             --speed-color: #9b59b6; 
-            --ai-color: #8e44ad; 
-            --pilot-color: #16a085; /* สีสำหรับปุ่ม Pilot */
+            --pilot-color: #16a085;
             --shadow: 0 4px 20px rgba(0,0,0,0.08);
-            --font-main: 'Sarabun', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* ฟอนต์หลัก: Sarabun */
+            --font-main: 'Sarabun', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
 
         body {
@@ -59,11 +55,35 @@
             position: relative;
         }
 
-        /* ลบ CSS สำหรับ .settings-group และ .toggle-btn ออก */
-        
+        /* Audio Status Indicator */
+        .audio-status-bar {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            color: #6c757d;
+            padding: 8px;
+            border-radius: 8px;
+            font-size: 12px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.3s;
+        }
+        .audio-status-bar.ready {
+            background-color: #d4edda;
+            border-color: #c3e6cb;
+            color: #155724;
+        }
+        .audio-status-bar.error {
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+            color: #721c24;
+        }
+
         h1 {
             margin-bottom: 30px;
-            margin-top: 40px;
+            margin-top: 10px;
             font-size: 28px;
             color: var(--accent-color);
             font-weight: 700;
@@ -123,13 +143,8 @@
             justify-content: center;
             transition: background 0.2s;
         }
-        .set-nav-btn:hover {
-            background-color: #bdc3c7;
-        }
-        .set-nav-btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
+        .set-nav-btn:hover { background-color: #bdc3c7; }
+        .set-nav-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
         .current-set-text {
             font-size: 20px;
@@ -147,9 +162,7 @@
         }
         
         @media (min-width: 600px) {
-            .display-grid {
-                grid-template-columns: repeat(3, 1fr);
-            }
+            .display-grid { grid-template-columns: repeat(3, 1fr); }
         }
 
         .stat-box {
@@ -178,24 +191,15 @@
             color: var(--text-main);
         }
 
-        /* --- CUMULATIVE LAPS EMPHASIS --- */
         #cum-stat-box {
-            grid-column: 1 / -1; /* Span full width on all devices */
-            background-color: var(--highlight-color); /* Orange color */
+            grid-column: 1 / -1;
+            background-color: var(--highlight-color);
             color: white;
             padding: 25px;
             border: 3px solid #f9fafb; 
         }
-        #cum-stat-box .stat-label {
-            font-size: 14px;
-            color: white;
-            font-weight: 700;
-        }
-        #cum-display { 
-            color: white !important; /* Force white text */
-            font-size: 56px; /* Huge font size */
-        }
-        /* --- END CUMULATIVE LAPS EMPHASIS --- */
+        #cum-stat-box .stat-label { color: white; }
+        #cum-display { color: white !important; font-size: 56px; }
 
         #dist-display { color: var(--accent-color); } 
         #speed-display { color: var(--speed-color); }
@@ -257,9 +261,7 @@
         }
 
         @media (min-width: 600px) {
-            .runner-buttons-grid {
-                grid-template-columns: repeat(10, 1fr);
-            }
+            .runner-buttons-grid { grid-template-columns: repeat(10, 1fr); }
         }
         
         .runner-score-btn {
@@ -270,19 +272,11 @@
             font-size: 16px;
             border-radius: 8px;
             cursor: pointer;
-            transition: background-color 0.2s, transform 0.1s;
+            transition: background-color 0.2s;
             line-height: 1;
-        }
-        .runner-score-btn:hover {
-            background-color: #2c3e50;
-            transform: none; 
-        }
-        .runner-score-btn:active {
-            transform: scale(0.98); 
         }
         .runner-score-btn.recorded {
             background-color: var(--timer-color);
-            color: white;
             font-weight: bold;
         }
 
@@ -316,41 +310,31 @@
             color: var(--text-main);
             display: flex;
             flex-direction: column;
-            align-items: flex-start;
-        }
-        .results-list li:last-child {
-            border-bottom: none;
         }
         .runner-id {
             font-weight: bold;
             color: var(--accent-color);
-            margin-bottom: 2px;
         }
         .runner-score-detail {
             color: #555;
             font-size: 14px;
-            line-height: 1.4;
         }
 
-        /* FIX: จัดกลุ่มปุ่ม Control Line 2 ให้อยู่บรรทัดเดียว */
         .button-group {
             display: flex;
             justify-content: center;
             gap: 15px;
             margin-top: 25px;
             flex-wrap: wrap;
-            align-items: center;
-            /* เพิ่มความยืดหยุ่นในบรรทัดล่าง */
             width: 100%;
         }
         
-        /* สไตล์สำหรับแถวของปุ่มย่อยและ Checkbox */
         .control-row {
             display: flex;
             flex-wrap: wrap;
             justify-content: center;
             gap: 15px;
-            width: 100%; /* ใช้ความกว้างเต็มเพื่อให้จัดกึ่งกลางง่าย */
+            width: 100%;
             margin-top: 10px;
         }
 
@@ -363,70 +347,28 @@
             font-weight: 600;
             border-radius: 50px;
             cursor: pointer;
-            transition: transform 0.2s, background-color 0.2s, box-shadow 0.2s;
             box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
-            font-family: inherit;
             min-width: 180px;
+            transition: transform 0.2s;
         }
+        button.action-btn:hover { transform: translateY(-2px); }
 
-        button.action-btn:hover {
-            transform: translateY(-2px);
-            filter: brightness(1.1);
-        }
-
-        button.action-btn:active {
-            transform: scale(0.98);
-        }
-        
-        button.action-btn:disabled {
-            background-color: #bdc3c7;
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
-        }
-
-        /* ปุ่ม End Set */
         button.end-set-btn {
             background-color: #8e44ad;
             box-shadow: 0 4px 15px rgba(142, 68, 173, 0.3);
         }
-        
-        /* ปุ่ม Pilot Test (Restore) */
-        button.pilot-btn {
-            background-color: var(--pilot-color);
-            box-shadow: 0 4px 15px rgba(22, 160, 133, 0.3);
-            font-size: 16px;
-            padding: 12px 25px;
-            min-width: auto;
-        }
 
-        /* Checkbox Styling (Moved to Control Row) */
-        .export-options {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 10px;
-        }
-        
         .checkbox-wrapper {
             display: flex;
             align-items: center;
             cursor: pointer;
             font-size: 16px;
             font-weight: 600;
-            color: var(--text-main);
             background: #f0f0f0;
             padding: 8px 15px;
             border-radius: 20px;
-            user-select: none;
         }
-        
-        .checkbox-wrapper input {
-            margin-right: 8px;
-            width: 18px;
-            height: 18px;
-            cursor: pointer;
-        }
+        .checkbox-wrapper input { margin-right: 8px; }
 
         .progress-bar {
             width: 100%;
@@ -447,13 +389,12 @@
         .status-text {
             margin-top: 20px;
             font-size: 22px;
-            color: var(--text-main);
             font-weight: 600;
             height: 30px;
         }
 
         .next-beep-box {
-            background-color: #fff3cd; /* Light yellow bg for alert */
+            background-color: #fff3cd; 
             border: 1px solid #ffeeba;
             padding: 15px;
             border-radius: 12px;
@@ -468,12 +409,9 @@
         /* Modal Styles */
         .modal-overlay {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0, 0, 0, 0.5);
-            display: none; /* Hidden by default */
+            display: none;
             justify-content: center;
             align-items: center;
             z-index: 1000;
@@ -487,95 +425,35 @@
             max-width: 500px;
             text-align: left;
             box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-            position: relative;
         }
         
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-        }
-        
-        .modal-title {
-            font-size: 20px;
-            font-weight: bold;
-            color: #e67e22; /* Warning/Info color */
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        
-        .modal-close {
-            background: none;
-            border: none;
-            font-size: 24px;
-            cursor: pointer;
-            color: #999;
-        }
-        
-        .modal-body {
-            line-height: 1.6;
-            color: #333;
-        }
-
-        .modal-input {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 8px;
-            margin-top: 10px;
-            box-sizing: border-box;
-            font-size: 16px;
-        }
-
-        .modal-actions {
-            display: flex;
-            justify-content: flex-end;
-            gap: 10px;
-            margin-top: 20px;
-        }
-
         .modal-btn {
             padding: 10px 20px;
             border: none;
             border-radius: 25px;
             cursor: pointer;
             font-weight: 600;
-            transition: background 0.2s;
+            margin-left: 10px;
         }
 
-        .modal-confirm-btn {
-            background-color: #e74c3c;
-            color: white;
-        }
-
-        .modal-confirm-btn:hover {
-            background-color: #c0392b;
-        }
-
-        .modal-cancel-btn {
-            background-color: #ecf0f1;
-            color: var(--text-main);
-        }
-
-        .modal-cancel-btn:hover {
-            background-color: #bdc3c7;
-        }
-        /* End Modal Styles */
+        .modal-confirm-btn { background-color: #e74c3c; color: white; }
+        .modal-cancel-btn { background-color: #ecf0f1; color: var(--text-main); }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <!-- ลบ settings-group และปุ่มเปลี่ยนฟอนต์ออก -->
+        <!-- Audio Status Indicator -->
+        <div id="audio-status" class="audio-status-bar">
+            <span>🔌 Waiting for Audio...</span>
+        </div>
 
         <h1>20m-SRT (Shuttle Run Test)</h1>
         
         <div class="set-input-group">
             <div class="set-control-item">
                 <label for="totalSets">จำนวนชุดทั้งหมด:</label>
-                <input type="number" id="totalSets" value="1" min="1" onchange="updateTotalSets(this.value); toggleButtonsState();" oninput="toggleButtonsState()">
+                <input type="number" id="totalSets" value="1" min="1" onchange="updateTotalSets(this.value); toggleButtonsState();">
             </div>
             <div class="set-control-item">
                 <label>ชุดปัจจุบัน:</label>
@@ -588,28 +466,23 @@
         </div>
 
         <div class="display-grid">
-            <!-- 1. CUMULATIVE LAPS (เน้นเป็นพิเศษ) -->
             <div class="stat-box" id="cum-stat-box">
                 <div class="stat-label">Cumulative Laps (รวมรอบ)</div>
                 <div class="stat-value" id="cum-display">0</div> 
             </div>
-            <!-- 2. Level -->
             <div class="stat-box">
                 <div class="stat-label">Level</div>
                 <div class="stat-value" id="level-display">1</div>
             </div>
-            <!-- 3. Laps -->
             <div class="stat-box">
                 <div class="stat-label">Laps</div>
                 <div class="stat-value" id="shuttle-display">1</div>
             </div>
-            <!-- 4. Speed -->
             <div class="stat-box">
                 <div class="stat-label">Speed</div>
                 <div class="stat-value" id="speed-display">8.5</div>
                 <div class="stat-label" style="font-size: 10px; margin-top: -5px;">km/h</div>
             </div>
-            <!-- 5. Distance (m) -->
             <div class="stat-box">
                 <div class="stat-label">Distance (m)</div>
                 <div class="stat-value" id="dist-display">0</div>
@@ -624,23 +497,20 @@
         <div class="timer-display">Total Time: <span id="total-time">00:00</span></div>
         
         <div class="score-display">
-            บันทึกผล (Score): <span id="score-text">Level 1 - Lap 0 | รวม 0 รอบ | 0 ม.</span>
+            บันทึกผล (Score): <span id="score-text">Level 1 - Lap 0 | รวม 0 รอบ | 0 ม. | MRS: 0.0 km/h</span>
         </div>
         
         <div class="status-text" id="status-text">Ready to Start</div>
         
         <div class="score-buttons-container">
-            <div class="score-label-btn">บันทึกผลผู้ทดสอบ: (กดเพื่อบันทึก/ยกเลิกคะแนนปัจจุบัน)</div>
-            <div id="runner-buttons" class="runner-buttons-grid">
-                <!-- Buttons 1-10 -->
-            </div>
+            <div class="score-label-btn">บันทึกผลผู้ทดสอบ:</div>
+            <div id="runner-buttons" class="runner-buttons-grid"></div>
         </div>
 
         <div class="progress-bar">
             <div class="progress-fill" id="progress-fill"></div>
         </div>
 
-        <!-- NEW: Checkbox Row -->
         <div class="control-row">
              <div class="export-options" id="export-options-container" style="display: none;">
                 <label class="checkbox-wrapper">
@@ -650,16 +520,11 @@
             </div>
         </div>
         
-        <!-- Updated Button Group -->
         <div class="button-group">
             <button id="start-btn" class="action-btn" onclick="startTest()">START TEST</button>
-            <button id="pause-btn" class="action-btn" onclick="togglePause()" style="display: none; background-color: var(--pause-color); box-shadow: 0 4px 15px rgba(243, 156, 18, 0.3);">PAUSE</button>
-            
+            <button id="pause-btn" class="action-btn" onclick="togglePause()" style="display: none; background-color: var(--pause-color);">PAUSE</button>
             <button id="next-set-btn" class="action-btn end-set-btn" onclick="finishTestAndAdvance()" style="display: none;">▶️ เริ่มชุดต่อไป (Manual)</button>
-
-            <button id="reset-btn" class="action-btn" onclick="resetTest()" style="display: none; background-color: #e74c3c; box-shadow: 0 4px 15px rgba(231, 76, 60, 0.3);">RESET ALL</button>
-            
-            <!-- PDF Export Button -->
+            <button id="reset-btn" class="action-btn" onclick="resetTest()" style="display: none; background-color: #e74c3c;">RESET ALL</button>
             <button id="pdf-export-btn" class="action-btn" onclick="exportToPDF()" style="display: none;">⬇️ ส่งออกเป็น PDF</button>
         </div>
         
@@ -671,64 +536,92 @@
         </div>
     </div>
 
-    <!-- Info/Password Modal -->
+    <!-- Modals -->
     <div class="modal-overlay" id="custom-modal">
         <div class="modal-content">
-            <div class="modal-header">
-                <div class="modal-title" id="modal-title">ℹ️ แจ้งเตือน</div>
-                <button class="modal-close" onclick="closeModal()">&times;</button>
-            </div>
-            <div id="modal-body" class="modal-body">
-                <p id="modal-text">Content</p>
-                <!-- Dynamic input for password -->
-                <input type="password" id="modal-input" class="modal-input" placeholder="Admin Password (1234)" style="display:none;">
-            </div>
-            <div id="modal-actions" class="modal-actions">
-                <!-- Dynamic buttons -->
-            </div>
+            <div id="modal-title" style="font-weight: bold; margin-bottom: 10px; font-size: 20px;">ℹ️ แจ้งเตือน</div>
+            <div id="modal-body" style="margin-bottom: 20px; line-height: 1.5;"></div>
+            <input type="password" id="modal-input" style="display:none; width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 5px;" placeholder="Admin Password (1234)">
+            <div id="modal-actions" style="display:flex; justify-content: flex-end;"></div>
         </div>
     </div>
 
     <script>
-        // === State Management ===
-        let testSets = {
-            total: 1, 
-            current: 1, 
-            data: {} 
-        };
-        let currentLevelIndex = 0;
-        let currentShuttleCount = 0;
-        let totalCumulativeLaps = 0; 
-        
-        let isRunning = false;
-        let isPaused = false;
-        let startTime = 0;
-        let timerInterval;
-        let shuttleStartTime = 0;
-        let shuttleDuration = 0;
-        let pauseStartTimestamp = 0;
+        // === Audio & Bluetooth Handling (FIXED) ===
         let audioCtx = null;
-        const ADMIN_PASSWORD = "1234";
+        const statusDiv = document.getElementById('audio-status');
 
-        // --- Prevent Unload/Refresh ---
-        window.addEventListener('beforeunload', function (e) {
-            if (isRunning || isPaused) {
-                // แสดงข้อความเตือนหากผู้ใช้พยายามออกจากหน้าจอขณะกำลังวิ่ง
-                const message = 'การทดสอบ PACER กำลังดำเนินอยู่ การรีเฟรช/ปิดหน้าต่างจะทำให้ข้อมูลปัจจุบันสูญหาย คุณแน่ใจหรือไม่?';
-                e.preventDefault(); 
-                e.returnValue = message; 
-                return message;
-            }
-        });
-        // ------------------------------
-
-
-        function initAudio() {
-             if (!audioCtx) {
-                 audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-             }
+        function updateAudioStatus(msg, type) {
+            statusDiv.innerHTML = msg;
+            statusDiv.className = 'audio-status-bar ' + type;
         }
 
+        function initAudio() {
+            if (!audioCtx) {
+                // ไม่กำหนด sampleRate เพื่อให้ยืดหยุ่นกับ Bluetooth
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                
+                // Monitor State Changes
+                audioCtx.onstatechange = () => {
+                    if (audioCtx.state === 'running') {
+                        updateAudioStatus("📡 Audio Active (Bluetooth Ready)", "ready");
+                    } else if (audioCtx.state === 'suspended' || audioCtx.state === 'interrupted') {
+                        updateAudioStatus("⚠️ Audio Suspended - Click to Resume", "error");
+                    }
+                };
+            }
+            
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            
+            updateAudioStatus("📡 Audio Active (Bluetooth Ready)", "ready");
+        }
+
+        // --- CORE BLUETOOTH FIX: Device Change Listener ---
+        if (navigator.mediaDevices && navigator.mediaDevices.addEventListener) {
+            navigator.mediaDevices.addEventListener('devicechange', async () => {
+                console.log("Device change detected (Bluetooth connected/disconnected). Re-syncing...");
+                updateAudioStatus("🔄 Re-syncing Audio Device...", "error");
+                
+                if (audioCtx) {
+                    try {
+                        if (audioCtx.state !== 'running') {
+                            await audioCtx.resume();
+                        }
+                        // เล่นเสียงสั้นๆ เพื่อ "ปลุก" audio context ในอุปกรณ์ใหม่ (เสียงทุ้ม 400Hz)
+                        if (isRunning) playTone(0.1, 400); 
+                    } catch (e) {
+                        console.error("Audio resume failed:", e);
+                    }
+                }
+            });
+        }
+
+        // ปรับ Default Frequency เป็น 400Hz (เสียงทุ้ม)
+        function playTone(duration = 0.7, freq = 400) {
+            if (!audioCtx) initAudio();
+            // Force Resume if suspended (common in Bluetooth wakeup)
+            if (audioCtx.state === 'suspended' || audioCtx.state === 'interrupted') {
+                audioCtx.resume();
+            }
+
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            osc.frequency.value = freq;
+            gain.gain.setValueAtTime(0, audioCtx.currentTime);
+            gain.gain.linearRampToValueAtTime(0.5, audioCtx.currentTime + 0.05);
+            gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + duration - 0.1);
+
+            osc.start();
+            osc.stop(audioCtx.currentTime + duration);
+        }
+
+        // === TTS ===
         let thaiVoice = null;
         if ('speechSynthesis' in window) {
             speechSynthesis.onvoiceschanged = () => {
@@ -737,675 +630,34 @@
             };
         }
 
-        // --- Custom Modal Functions ---
-        function closeModal() {
-            document.getElementById('custom-modal').style.display = 'none';
-            document.getElementById('modal-input').style.display = 'none'; // Hide input on close
-            document.getElementById('modal-input').value = ''; // Clear input
-        }
-
-        function showModal(title, message, isError = false) {
-            document.getElementById('modal-title').innerHTML = title;
-            document.getElementById('modal-title').style.color = isError ? '#e74c3c' : '#e67e22';
-            document.getElementById('modal-text').innerText = message;
-            document.getElementById('modal-input').style.display = 'none';
-            document.getElementById('modal-actions').innerHTML = `
-                <button class="modal-btn modal-cancel-btn" onclick="closeModal()">OK</button>
-            `;
-            document.getElementById('custom-modal').style.display = 'flex';
-        }
-
-        function showPasswordModal(onConfirmCallback) {
-            document.getElementById('modal-title').innerHTML = '🔒 ยืนยันรหัสผ่านผู้ดูแล';
-            document.getElementById('modal-title').style.color = '#e74c3c';
-            document.getElementById('modal-text').innerText = 'กรุณาใส่รหัสผ่านเพื่อยืนยันการล้างข้อมูลทั้งหมด (1234):';
-            
-            const inputField = document.getElementById('modal-input');
-            inputField.style.display = 'block';
-            inputField.value = '';
-            
-            document.getElementById('modal-actions').innerHTML = `
-                <button class="modal-btn modal-cancel-btn" onclick="closeModal()">ยกเลิก</button>
-                <button class="modal-btn modal-confirm-btn" id="modal-confirm-action">ยืนยันการล้างข้อมูล</button>
-            `;
-            
-            document.getElementById('custom-modal').style.display = 'flex';
-            inputField.focus();
-
-            // Setup the confirmation handler dynamically
-            const confirmBtn = document.getElementById('modal-confirm-action');
-            confirmBtn.onclick = () => {
-                const password = inputField.value;
-                if (password === ADMIN_PASSWORD) {
-                    closeModal();
-                    onConfirmCallback();
-                } else {
-                    showModal('❌ ข้อผิดพลาด', 'รหัสผ่านไม่ถูกต้อง! กรุณาลองใหม่อีกครั้ง.', true);
-                }
-            };
-        }
-        // --- End Custom Modal Functions ---
-
-        function updateTotalSets(value) {
-            const total = parseInt(value);
-            if (total >= 1) {
-                testSets.total = total;
-                if (testSets.current > total) {
-                    testSets.current = total;
-                    document.getElementById('currentSetDisplay').innerText = testSets.current;
-                    renderRunnerScores();
-                    setupRunnerButtons();
-                }
-            } else {
-                document.getElementById('totalSets').value = 1;
-                testSets.total = 1;
-                if (testSets.current > 1) {
-                    testSets.current = 1;
-                    document.getElementById('currentSetDisplay').innerText = 1;
-                    renderRunnerScores();
-                    setupRunnerButtons();
-                }
-            }
-        }
-        
-        function changeSet(delta) {
-            if (isRunning || isPaused) return; 
-
-            const newSet = testSets.current + delta;
-            
-            if (newSet >= 1 && newSet <= testSets.total) {
-                testSets.current = newSet;
-                document.getElementById('currentSetDisplay').innerText = testSets.current;
-                
-                renderRunnerScores(); 
-                setupRunnerButtons();
-            }
-        }
-        
-        function toggleButtonsState() {
-             const input = document.getElementById('totalSets');
-             const hasRecordedScores = Object.keys(testSets.data).length > 0;
-             const navButtons = document.querySelectorAll('.set-nav-btn');
-             
-             input.disabled = isRunning;
-             
-             navButtons.forEach(btn => btn.disabled = isRunning);
-
-             document.getElementById('export-options-container').style.display = hasRecordedScores ? 'flex' : 'none';
-             document.getElementById('pdf-export-btn').style.display = hasRecordedScores ? 'inline-block' : 'none';
-
-             const nextSetBtn = document.getElementById('next-set-btn');
-             nextSetBtn.style.display = (isRunning || isPaused) ? 'inline-block' : 'none';
-
-             document.getElementById('start-btn').style.display = !isRunning && !isPaused ? 'inline-block' : 'none';
-             document.getElementById('reset-btn').style.display = isRunning || isPaused || hasRecordedScores ? 'inline-block' : 'none';
-             document.getElementById('pause-btn').style.display = isRunning || isPaused ? 'inline-block' : 'none';
-        }
-
-
-        function finishTestAndAdvance() {
-            if (!isRunning || isPaused) return; // Only advance if running (or paused, if user hits manual advance)
-            
-            exportToPDF();
-            finishTest(true); 
-        }
-        
-        // NEW Helper: Get Max Speed based on completed laps
-        function getMaxSpeed(totalCompleted) {
-            if (totalCompleted <= 0) return 0.0;
-            
-            let maxSpeed = pacerData[0].speed; // Default to first level speed
-            
-            for (const data of pacerData) {
-                if (totalCompleted >= data.cumulative) {
-                    // This level was completed or passed
-                    maxSpeed = data.speed;
-                } else {
-                    // Score falls in the current level (data), but the max speed is the speed of the PREVIOUS completed level
-                    // Since we initialize with pacerData[0].speed and only update if totalCompleted >= cumulative, the last successful speed is stored in maxSpeed
-                    break;
-                }
-            }
-            return maxSpeed;
-        }
-
-        function getFormattedScore(totalCompleted) {
-            if (totalCompleted <= 0) return "Level 1 - Lap 0";
-            
-            for (let i = pacerData.length - 1; i >= 0; i--) {
-                const prevCum = (i > 0) ? pacerData[i-1].cumulative : 0;
-                
-                // If the completed laps is greater than the cumulative laps of the PREVIOUS level
-                if (totalCompleted > prevCum) {
-                    const level = pacerData[i].level;
-                    const lap = totalCompleted - prevCum;
-                    return `Level ${level} - Lap ${lap}`;
-                }
-            }
-            
-            if (totalCompleted === 1) return "Level 1 - Lap 1";
-            
-            return "Test Completed";
-        }
-
-
-        function saveRunnerScore(runnerId) {
-            const uniqueKey = `${testSets.current}-${runnerId}`;
-            
-            if (testSets.data[uniqueKey]) {
-                delete testSets.data[uniqueKey];
-            } else {
-                const completedLaps = totalCumulativeLaps; 
-                
-                if (completedLaps <= 0) { 
-                    const statusText = document.getElementById('status-text').innerText;
-                    document.getElementById('status-text').innerText = "⚠️ ต้องเริ่มวิ่งก่อนบันทึก";
-                    document.getElementById('status-text').style.color = "#e74c3c";
-                    setTimeout(() => {
-                        if (document.getElementById('status-text').innerText.includes("⚠️")) {
-                            document.getElementById('status-text').innerText = isPaused ? "PAUSED" : (isRunning ? "Running..." : "Ready to Start");
-                            document.getElementById('status-text').style.color = isPaused ? "#f39c12" : "var(--text-main)";
-                        }
-                    }, 2000);
-                    return;
-                }
-
-                const levelLapStr = getFormattedScore(completedLaps);
-                const distance = completedLaps * 20;
-                const distStr = distance.toLocaleString();
-                const maxSpeed = getMaxSpeed(completedLaps); // Get MRS
-
-                testSets.data[uniqueKey] = {
-                    runnerId: runnerId,
-                    set: testSets.current,
-                    score: completedLaps,
-                    levelLap: levelLapStr,
-                    distance: distStr,
-                    time: document.getElementById('total-time').innerText,
-                    maxSpeed: maxSpeed.toFixed(1) // บันทึก MRS
-                };
-            }
-            
-            renderRunnerScores();
-            toggleButtonsState(); 
-        }
-        
-        function renderRunnerScores() {
-            const list = document.getElementById('saved-results-list');
-            list.innerHTML = ''; 
-            
-            const recordedScores = Object.keys(testSets.data)
-                .map(key => ({ key, data: testSets.data[key] }))
-                .sort((a, b) => {
-                    const [setA, idA] = a.key.split('-').map(Number);
-                    const [setB, idB] = b.key.split('-').map(Number);
-                    if (setA !== setB) return setA - setB;
-                    return idA - idB;
-                });
-
-            if (recordedScores.length === 0) {
-                list.innerHTML = '<li>ยังไม่มีการบันทึกผลผู้ทดสอบ</li>';
-                document.querySelectorAll('.runner-score-btn').forEach(btn => {
-                    btn.classList.remove('recorded');
-                    const runnerId = btn.className.match(/runner-id-(\d+)/)[1];
-                    btn.innerText = `#${runnerId}`;
-                });
-                return;
-            }
-
-            let lastSet = 0;
-            document.querySelectorAll('.runner-score-btn').forEach(btn => {
-                 btn.classList.remove('recorded');
-                 const runnerId = btn.className.match(/runner-id-(\d+)/)[1];
-                 btn.innerText = `#${runnerId}`;
-            });
-
-            recordedScores.forEach(({ data }) => {
-                if (data.set !== lastSet) {
-                    const setHeader = document.createElement('li');
-                    setHeader.className = 'results-title';
-                    setHeader.style.marginTop = lastSet === 0 ? '0' : '15px';
-                    setHeader.style.borderBottom = '1px solid #ddd';
-                    setHeader.style.color = 'var(--text-main)';
-                    setHeader.style.paddingBottom = '2px';
-                    setHeader.innerHTML = `ชุดที่ ${data.set} (${data.set}/${testSets.total}):`;
-                    list.appendChild(setHeader);
-                    lastSet = data.set;
-                }
-
-                const listItem = document.createElement('li');
-                listItem.innerHTML = `
-                    <span class="runner-id">ผู้ทดสอบ #${data.runnerId}</span>
-                    <span class="runner-score-detail">
-                        ${data.levelLap} | รวม **${data.score}** รอบ | ${data.distance} ม. | เวลา: ${data.time}
-                        ${data.maxSpeed ? `| MRS: ${data.maxSpeed} km/h` : ''} <!-- แสดง MRS -->
-                    </span>
-                `;
-                list.appendChild(listItem);
-                
-                if (data.set === testSets.current) {
-                    const btn = document.querySelector(`.runner-buttons-grid .runner-id-${data.runnerId}`);
-                    if (btn) {
-                        btn.classList.add('recorded');
-                        btn.innerText = `#${data.runnerId} (${data.score})`;
-                    }
-                }
-            });
-        }
-        
-        function setupRunnerButtons() {
-            const grid = document.getElementById('runner-buttons');
-            grid.innerHTML = '';
-            for (let i = 1; i <= 10; i++) {
-                const btn = document.createElement('button');
-                btn.className = 'runner-score-btn runner-id-' + i; 
-                btn.innerText = `#${i}`;
-                btn.setAttribute('onclick', `saveRunnerScore(${i})`);
-                grid.appendChild(btn);
-            }
-            renderRunnerScores();
-        }
-
-        function updateDisplay() {
-            const currentData = pacerData[currentLevelIndex];
-            document.getElementById('level-display').innerText = currentData.level;
-            document.getElementById('speed-display').innerText = currentData.speed.toFixed(1);
-            document.getElementById('shuttle-display').innerText = currentShuttleCount + 1;
-            document.getElementById('cum-display').innerText = totalCumulativeLaps; 
-            
-            const distance = totalCumulativeLaps * 20;
-            document.getElementById('dist-display').innerText = distance.toLocaleString();
-            
-            const completedLaps = totalCumulativeLaps;
-            const levelLapStr = getFormattedScore(completedLaps);
-            const distStr = distance.toLocaleString();
-
-            const maxSpeed = getMaxSpeed(completedLaps); // Get MRS
-            
-            // อัปเดต score-text ให้แสดง MRS ด้วย
-            document.getElementById('score-text').innerText = `${levelLapStr} | MRS: ${maxSpeed.toFixed(1)} km/h | รวม ${completedLaps} รอบ | ${distStr} ม.`;
-        }
-
-        function formatTime(ms) {
-            const totalSeconds = Math.floor(ms / 1000);
-            const minutes = Math.floor(totalSeconds / 60).toString().padStart(2, '0');
-            const seconds = (totalSeconds % 60).toString().padStart(2, '0');
-            return `${minutes}:${seconds}`;
-        }
-
-        function playTone() {
-            if (!audioCtx) return;
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-
-            osc.frequency.value = 600;
-            gain.gain.value = 0.5;
-
-            osc.start();
-            osc.stop(audioCtx.currentTime + 0.7);
-        }
-
         function speak(text) {
              if (!('speechSynthesis' in window)) return;
-
-             speechSynthesis.cancel();
+             // Don't cancel immediately if tone is playing, wait slightly? 
+             // Actually cancel is good to stop previous overlap
+             speechSynthesis.cancel(); 
              const u = new SpeechSynthesisUtterance(text);
              u.lang = 'th-TH';
              u.rate = 1.0;
              u.pitch = 1.2;
              if (thaiVoice) u.voice = thaiVoice;
-
              speechSynthesis.speak(u);
         }
-        
-        function startInterval() {
-            timerInterval = setInterval(() => {
-                if (isPaused) return; 
 
-                const now = Date.now();
-                const totalElapsed = now - startTime;
-                document.getElementById('total-time').innerText = formatTime(totalElapsed);
-
-                const shuttleElapsed = (now - shuttleStartTime) / 1000;
-                let remaining = shuttleDuration - shuttleElapsed; 
-
-                // Ensure remaining time is not negative visually
-                remaining = Math.max(0, remaining);
-
-                if (remaining <= 0.02) { // Allow for a small margin of error before triggering nextShuttle
-                    nextShuttle();
-                } else {
-                    document.getElementById('countdown-display').innerText = remaining.toFixed(2);
-                    const percent = (shuttleElapsed / shuttleDuration) * 100;
-                    document.getElementById('progress-fill').style.width = `${percent}%`;
-                }
-            }, 20);
-        }
-
-        function startTest() {
-            if (isRunning) return;
-            
-            initAudio();
-            toggleButtonsState();
-
-            if (audioCtx.state === 'suspended') {
-                audioCtx.resume();
-            }
-
-            document.getElementById('start-btn').style.display = 'none';
-            document.getElementById('reset-btn').style.display = 'none'; 
-            document.getElementById('pause-btn').style.display = 'none';
-            document.getElementById('next-set-btn').style.display = 'none';
-            
-            let countdown = 8;
-            document.getElementById('status-text').innerText = `Starting in ${countdown}...`;
-            
-            const preStartInterval = setInterval(() => {
-                countdown--;
-                if (countdown > 0) {
-                    document.getElementById('status-text').innerText = `Starting in ${countdown}...`;
-                    
-                    if (countdown === 1) { // Add tone for the last second
-                        const thaiNumbers = ["", "หนึ่ง", "สอง", "สาม", "สี่", "ห้า"];
-                        speak(thaiNumbers[countdown]);
-                        playTone(); 
-                    } else if (countdown <= 5) {
-                        const thaiNumbers = ["", "หนึ่ง", "สอง", "สาม", "สี่", "ห้า"];
-                        speak(thaiNumbers[countdown]);
-                    }
-                    
-                } else {
-                    clearInterval(preStartInterval);
-                    document.getElementById('status-text').innerText = "RUN!";
-                    beginPacerLogic();
-                }
-            }, 1000);
-        }
-
-        function beginPacerLogic() {
-            isRunning = true;
-            isPaused = false;
-            
-            toggleButtonsState(); 
-            
-            document.getElementById('pause-btn').innerText = "PAUSE";
-            document.getElementById('pause-btn').style.backgroundColor = 'var(--pause-color)';
-            document.getElementById('status-text').innerText = "Running...";
-            document.getElementById('status-text').style.color = "var(--text-main)";
-            
-            if (startTime === 0) { 
-                 startTime = Date.now();
-                 currentLevelIndex = 0;
-                 currentShuttleCount = 0;
-                 totalCumulativeLaps = 0;
-            }
-
-            startShuttle(); 
-
-            startInterval(); 
-        }
-
-        function togglePause() {
-            const pauseBtn = document.getElementById('pause-btn');
-            
-            if (!isPaused) {
-                isPaused = true;
-                clearInterval(timerInterval); 
-                pauseStartTimestamp = Date.now();
-                
-                pauseBtn.innerText = "RESUME";
-                pauseBtn.style.backgroundColor = "#27ae60"; 
-                document.getElementById('status-text').innerText = "PAUSED";
-                document.getElementById('status-text').style.color = "#f39c12";
-                
-                toggleButtonsState(); 
-
-            } else {
-                isPaused = false;
-                const now = Date.now();
-                const pauseDuration = now - pauseStartTimestamp; 
-                
-                startTime += pauseDuration;
-                shuttleStartTime += pauseDuration;
-
-                pauseBtn.innerText = "PAUSE";
-                pauseBtn.style.backgroundColor = "var(--pause-color)";
-                document.getElementById('status-text').innerText = "Running...";
-                document.getElementById('status-text').style.color = "var(--text-main)";
-
-                startInterval(); 
-                toggleButtonsState();
-            }
-        }
-
-        function startShuttle() {
-            const currentLevelData = pacerData[currentLevelIndex];
-            shuttleDuration = currentLevelData.seconds;
-            shuttleStartTime = Date.now();
-            updateDisplay();
-
-            document.getElementById('progress-fill').style.width = '0%';
-        }
-
-        function nextShuttle() {
-            // *** CORE LOGIC FOR LAP COUNTING: INCREMENTS HERE (at the BEEP) ***
-            totalCumulativeLaps++; 
-            // **********************************
-
-            const currentLevelData = pacerData[currentLevelIndex];
-
-            currentShuttleCount++;
-            
-            if (currentShuttleCount > currentLevelData.shuttles) { 
-                currentLevelIndex++;
-                currentShuttleCount = 1; 
-
-                if (currentLevelIndex >= pacerData.length) {
-                    finishTest(); 
-                    return;
-                }
-
-                playTone();
-                // Speak new level number
-                speak(`ระดับ ${pacerData[currentLevelIndex].level} เริ่มแล้ว`);
-                document.getElementById('status-text').innerText = `Level ${pacerData[currentLevelIndex].level} Started!`;
-            } else {
-                playTone();
-                document.getElementById('status-text').innerText = "Turn Around & Run!";
-            }
-
-            startShuttle();
-        }
-
-        function finishTest(isManualFinish = false) {
-            clearInterval(timerInterval);
-            isRunning = false;
-            isPaused = false; 
-            
-            document.getElementById('status-text').style.color = "var(--text-main)";
-            document.getElementById('countdown-display').innerText = "0.00";
-            document.getElementById('progress-fill').style.width = "100%";
-            
-            updateDisplay(); 
-            playTone();
-            playTone();
-            
-            if (testSets.current < testSets.total && (isManualFinish || currentLevelIndex >= pacerData.length)) {
-                // Advance set and prepare for the next run
-                showModal('✅ เสร็จสิ้นชุดทดสอบ', `ชุดที่ ${testSets.current} บันทึกเสร็จสิ้นแล้ว จะเริ่มต้นชุดต่อไป: ${testSets.current + 1}`, false);
-                changeSet(1); 
-                performReset(true); 
-                document.getElementById('status-text').innerText = "พร้อมสำหรับชุดต่อไป!";
-            } else {
-                document.getElementById('status-text').innerText = "Test Completed! (จบการทดสอบ)";
-                document.getElementById('start-btn').innerText = 'START NEW TEST';
-                document.getElementById('pause-btn').style.display = 'none';
-                document.getElementById('next-set-btn').style.display = 'none';
-                toggleButtonsState(); 
-            }
-        }
-        
-        // **NEW** - Separated reset logic from confirmation
-        function performReset(keepScores = false) {
-            clearInterval(timerInterval);
-            isRunning = false;
-            isPaused = false;
-            currentLevelIndex = 0;
-            currentShuttleCount = 0;
-            totalCumulativeLaps = 0; 
-            startTime = 0; 
-            
-            toggleButtonsState();
-
-            document.getElementById('level-display').innerText = "1";
-            document.getElementById('shuttle-display').innerText = "1";
-            document.getElementById('speed-display').innerText = "8.5";
-            document.getElementById('cum-display').innerText = "0"; 
-            document.getElementById('dist-display').innerText = "0";
-            document.getElementById('score-text').innerText = "Level 1 - Lap 0 | รวม 0 รอบ | 0 ม. | MRS: 0.0 km/h"; 
-            
-            if (!keepScores) {
-                testSets.data = {};
-                testSets.current = 1;
-                document.getElementById('totalSets').value = 1;
-                testSets.total = 1;
-                document.getElementById('currentSetDisplay').innerText = `1`;
-            }
-
-            renderRunnerScores(); 
-            setupRunnerButtons(); 
-            
-            document.getElementById('countdown-display').innerText = "0.00";
-            document.getElementById('total-time').innerText = "00:00";
-            document.getElementById('status-text').innerText = "Ready to Start";
-            document.getElementById('status-text').style.color = "var(--text-main)";
-            document.getElementById('progress-fill').style.width = "0%";
-            
-            document.getElementById('start-btn').style.display = 'inline-block';
-            document.getElementById('start-btn').innerText = 'START TEST';
-            document.getElementById('pause-btn').style.display = 'none';
-            document.getElementById('next-set-btn').style.display = 'none';
-            toggleButtonsState(); 
-            
-            closeModal(); 
-        }
-
-        function resetTest(keepScores = false) {
-            // **Replaced prompt/alert with custom modal**
-            if (!keepScores) {
-                showPasswordModal(() => {
-                    // Password correct, proceed with full reset
-                    performReset(false);
-                    showModal('✅ ล้างข้อมูลสำเร็จ', 'ข้อมูลผลการทดสอบทั้งหมดถูกล้างเรียบร้อยแล้ว', false);
-                });
-            } else {
-                // Used for automatic reset/advance to the next set (keepScores=true)
-                performReset(true);
-            }
-        }
-        
-        // --- PDF Export Logic ---
-        function exportToPDF() {
-            if (Object.keys(testSets.data).length === 0) {
-                 showModal("⚠️ ไม่พบข้อมูล", "ไม่พบข้อมูลคะแนนที่บันทึกไว้สำหรับส่งออก", true);
-                return;
-            }
-            
-            if (typeof window.jspdf === 'undefined' || typeof window.jspdf.jsPDF === 'undefined') {
-                 showModal("⚠️ ข้อผิดพลาด jsPDF", "กำลังโหลด jsPDF... หรือไฟล์ jspdf.umd.min.js อาจไม่พร้อมใช้งาน", true);
-                 return;
-            }
-
-            const { jsPDF } = window.jspdf;
-            
-            const currentSet = testSets.current;
-            const today = new Date().toISOString().slice(0, 10);
-            const exportAll = document.getElementById('exportAllSets').checked;
-            
-            let filename;
-            if (exportAll) {
-                filename = `PACER_AllSets_${today}.pdf`;
-            } else {
-                filename = `PACER_Set_${currentSet}_${today}.pdf`;
-            }
-
-            // Using A4 standard size (210 x 297 mm)
-            const doc = new jsPDF('p', 'mm', 'a4'); 
-            let y = 10;
-            const lineHeight = 7;
-            const padding = 15; // Increased padding for better appearance
-            
-            // Note: jsPDF does not natively support Thai fonts without custom font registration (which is complex/unreliable in a single-file setup). Using default Helvetica/Times.
-            
-            doc.setFont("Helvetica", "bold");
-            doc.setFontSize(16);
-            doc.text(exportAll ? "20m-SRT Score Summary (All Sets)" : "20m-SRT Score Summary (Single Set)", padding, y); 
-            y += lineHeight;
-
-            doc.setFontSize(10);
-            doc.setFont("Helvetica", "normal");
-            doc.text(`Export Date: ${today}`, padding, y);
-            if (!exportAll) {
-                doc.text(`Current Set: ${currentSet} of ${testSets.total}`, 100, y); 
-            } else {
-                doc.text(`Total Test Sets: ${testSets.total}`, 100, y); 
-            }
-            y += lineHeight * 2;
-
-            let scores = Object.keys(testSets.data)
-                .map(key => ({ key, data: testSets.data[key] }))
-                .filter(item => exportAll || item.data.set === currentSet)
-                .sort((a, b) => {
-                    const [setA, idA] = a.key.split('-').map(Number);
-                    const [setB, idB] = b.key.split('-').map(Number);
-                    if (setA !== setB) return setA - setB;
-                    return idA - idB;
-                });
-            
-            if (scores.length === 0) {
-                showModal("⚠️ ไม่พบข้อมูล", "ไม่พบข้อมูลคะแนนสำหรับชุดที่เลือก", true);
-                return;
-            }
-
-            doc.setFontSize(10);
-            let lastSet = 0;
-
-            scores.forEach(({ data }) => {
-                if (y > 280) { 
-                    doc.addPage();
-                    y = padding;
-                    doc.setFont("Helvetica", "normal");
-                    doc.setFontSize(10);
-                    lastSet = 0; 
-                }
-
-                if (data.set !== lastSet) {
-                    y += lineHeight;
-                    doc.setFont("Helvetica", "bold");
-                    doc.setFontSize(12);
-                    doc.text(`--- Test Set ${data.set} ---`, padding, y); 
-                    y += lineHeight;
-                    lastSet = data.set;
-                    doc.setFont("Helvetica", "normal");
-                    doc.setFontSize(10);
-                }
-
-                const scoreLine = `Runner #${data.runnerId}: ${data.levelLap} | MRS: ${data.maxSpeed || 'N/A'} km/h | Total Laps: ${data.score} | Distance: ${data.distance} m | Time: ${data.time}`;
-                
-                doc.text(scoreLine, padding, y);
-                y += lineHeight;
-            });
-
-            doc.save(filename);
-        }
+        // === State Management ===
+        let testSets = { total: 1, current: 1, data: {} };
+        let currentLevelIndex = 0;
+        let currentShuttleCount = 0;
+        let totalCumulativeLaps = 0;
+        let isRunning = false;
+        let isPaused = false;
+        let startTime = 0;
+        let timerInterval;
+        let shuttleStartTime = 0;
+        let shuttleDuration = 0;
+        let pauseStartTimestamp = 0;
+        const ADMIN_PASSWORD = "1234";
 
         const pacerData = [
-            // อัปเดตข้อมูล Level, Shuttles และ Cumulative ตามที่ผู้ใช้ระบุ
             { level: 1,  shuttles: 7,  seconds: 8.47, speed: 8.5, cumulative: 7 },
             { level: 2,  shuttles: 8,  seconds: 8.00, speed: 9.0, cumulative: 15 },
             { level: 3,  shuttles: 8,  seconds: 7.58, speed: 9.5, cumulative: 23 },
@@ -1429,27 +681,393 @@
             { level: 21, shuttles: 15, seconds: 3.89, speed: 18.5, cumulative: 237 }
         ];
 
-        
-        window.onload = function() {
-            // ตั้งค่าฟอนต์เริ่มต้นเป็น Sarabun
-            document.body.style.fontFamily = `'Sarabun', sans-serif`;
+        // --- Core UI Logic ---
+        function closeModal() {
+            document.getElementById('custom-modal').style.display = 'none';
+            document.getElementById('modal-input').style.display = 'none';
+            document.getElementById('modal-input').value = '';
+        }
 
-            setupRunnerButtons();
-            document.getElementById('currentSetDisplay').innerText = `1`;
-            document.getElementById('cum-display').innerText = "0";
-            document.getElementById('dist-display').innerText = "0";
-            // อัปเดตการแสดงผล MRS เริ่มต้น (0.0 km/h)
-            document.getElementById('score-text').innerText = "Level 1 - Lap 0 | MRS: 0.0 km/h | รวม 0 รอบ | 0 ม.";
+        function showModal(title, message, isError = false) {
+            document.getElementById('modal-title').innerText = title;
+            document.getElementById('modal-title').style.color = isError ? '#e74c3c' : '#e67e22';
+            document.getElementById('modal-body').innerText = message;
+            document.getElementById('modal-input').style.display = 'none';
+            document.getElementById('modal-actions').innerHTML = `<button class="modal-btn modal-cancel-btn" onclick="closeModal()">OK</button>`;
+            document.getElementById('custom-modal').style.display = 'flex';
+        }
+
+        function showPasswordModal(onConfirmCallback) {
+            document.getElementById('modal-title').innerHTML = '🔒 ยืนยันรหัสผ่านผู้ดูแล';
+            document.getElementById('modal-title').style.color = '#e74c3c';
+            document.getElementById('modal-body').innerText = 'กรุณาใส่รหัสผ่านเพื่อยืนยันการล้างข้อมูลทั้งหมด (1234):';
             
-            // Expose functions globally for HTML elements
-            window.updateTotalSets = updateTotalSets;
-            window.changeSet = changeSet;
-            window.startTest = startTest;
-            window.togglePause = togglePause;
-            window.finishTestAndAdvance = finishTestAndAdvance;
-            window.resetTest = resetTest;
-            window.exportToPDF = exportToPDF;
-            window.closeModal = closeModal; // Ensure modal is closable
+            const inputField = document.getElementById('modal-input');
+            inputField.style.display = 'block';
+            inputField.value = '';
+            
+            document.getElementById('modal-actions').innerHTML = `
+                <button class="modal-btn modal-cancel-btn" onclick="closeModal()">ยกเลิก</button>
+                <button class="modal-btn modal-confirm-btn" id="modal-confirm-action">ยืนยัน</button>
+            `;
+            
+            document.getElementById('custom-modal').style.display = 'flex';
+            inputField.focus();
+
+            document.getElementById('modal-confirm-action').onclick = () => {
+                if (inputField.value === ADMIN_PASSWORD) {
+                    closeModal();
+                    onConfirmCallback();
+                } else {
+                    alert("รหัสผ่านไม่ถูกต้อง");
+                }
+            };
+        }
+
+        function startTest() {
+            if (isRunning) return;
+            initAudio();
+            
+            // ปรับ Countdown เริ่มต้นเป็น 6 เพื่อให้นับ 5 ในวินาทีแรก
+            let countdown = 6;
+            document.getElementById('status-text').innerText = `Starting...`;
+            document.getElementById('start-btn').style.display = 'none';
+            
+            const preInterval = setInterval(() => {
+                countdown--;
+                if (countdown > 0) {
+                    document.getElementById('status-text').innerText = `Starting in ${countdown}...`;
+                    // Speak countdown numbers 5,4,3,2,1
+                    if (countdown <= 5) {
+                        const thaiNum = ["", "หนึ่ง", "สอง", "สาม", "สี่", "ห้า"];
+                        speak(thaiNum[countdown]);
+                    }
+                    // ตัดเสียง beep สั้นๆ ออกตามคำขอ เพื่อให้เหลือแค่เสียงปิ๊บตอนจบ
+                } else {
+                    clearInterval(preInterval);
+                    document.getElementById('status-text').innerText = "RUN!";
+                    // ตัด speak("เริ่มการทดสอบ") ออก
+                    // เพิ่มเสียงปิ๊บยาวเพื่อเริ่ม (ใช้ความถี่ 400Hz ทุ้ม)
+                    playTone(1.0, 400); 
+                    beginPacerLogic();
+                }
+            }, 1000);
+        }
+
+        function beginPacerLogic() {
+            isRunning = true;
+            isPaused = false;
+            startTime = Date.now();
+            currentLevelIndex = 0;
+            currentShuttleCount = 0;
+            totalCumulativeLaps = 0;
+            toggleButtonsState();
+            startShuttle();
+            startInterval();
+        }
+
+        function startShuttle() {
+            const data = pacerData[currentLevelIndex];
+            shuttleDuration = data.seconds;
+            shuttleStartTime = Date.now();
+            updateDisplay();
+        }
+
+        function startInterval() {
+            timerInterval = setInterval(() => {
+                if (isPaused) return;
+                const now = Date.now();
+                const elapsed = (now - shuttleStartTime) / 1000;
+                let remaining = Math.max(0, shuttleDuration - elapsed);
+
+                document.getElementById('total-time').innerText = formatTime(now - startTime);
+                document.getElementById('countdown-display').innerText = remaining.toFixed(2);
+                document.getElementById('progress-fill').style.width = `${(elapsed / shuttleDuration) * 100}%`;
+
+                if (remaining <= 0.05) { // Threshold
+                    nextShuttle();
+                }
+            }, 20); // 50Hz update
+        }
+
+        function nextShuttle() {
+            totalCumulativeLaps++;
+            const data = pacerData[currentLevelIndex];
+            currentShuttleCount++;
+
+            if (currentShuttleCount > data.shuttles) {
+                currentLevelIndex++;
+                currentShuttleCount = 1; // Reset to 1 for new level
+                if (currentLevelIndex >= pacerData.length) {
+                    finishTest();
+                    return;
+                }
+                // ตัดเสียงพูดแจ้งเตือน Level ออกตามคำขอ
+                // speak(`ระดับ ${pacerData[currentLevelIndex].level} เริ่มแล้ว`);
+            }
+            
+            playTone();
+            startShuttle();
+        }
+
+        function updateDisplay() {
+            const data = pacerData[currentLevelIndex];
+            document.getElementById('level-display').innerText = data.level;
+            document.getElementById('shuttle-display').innerText = currentShuttleCount; // Show current shuttle (1-based)
+            document.getElementById('speed-display').innerText = data.speed.toFixed(1);
+            document.getElementById('cum-display').innerText = totalCumulativeLaps;
+            document.getElementById('dist-display').innerText = (totalCumulativeLaps * 20).toLocaleString();
+            
+            // MRS Logic
+            const mrs = getMaxSpeed(totalCumulativeLaps);
+            const scoreStr = getFormattedScore(totalCumulativeLaps);
+            document.getElementById('score-text').innerText = `${scoreStr} | MRS: ${mrs.toFixed(1)} km/h | รวม ${totalCumulativeLaps} รอบ`;
+        }
+
+        function formatTime(ms) {
+            const s = Math.floor(ms / 1000);
+            return `${Math.floor(s / 60).toString().padStart(2, '0')}:${(s % 60).toString().padStart(2, '0')}`;
+        }
+
+        function togglePause() {
+            isPaused = !isPaused;
+            if (isPaused) {
+                pauseStartTimestamp = Date.now();
+                document.getElementById('status-text').innerText = "PAUSED";
+                document.getElementById('pause-btn').innerText = "RESUME";
+                document.getElementById('pause-btn').style.backgroundColor = '#27ae60';
+            } else {
+                const diff = Date.now() - pauseStartTimestamp;
+                startTime += diff;
+                shuttleStartTime += diff;
+                document.getElementById('status-text').innerText = "Running...";
+                document.getElementById('pause-btn').innerText = "PAUSE";
+                document.getElementById('pause-btn').style.backgroundColor = 'var(--pause-color)';
+            }
+        }
+
+        function finishTest(isManual = false) {
+            clearInterval(timerInterval);
+            isRunning = false;
+            // ใช้ 400Hz ทุ้ม
+            playTone(0.5, 400); playTone(0.5, 400);
+            document.getElementById('status-text').innerText = "Test Completed!";
+            document.getElementById('start-btn').innerText = "START NEW TEST";
+            toggleButtonsState();
+            
+            if (isManual) {
+                showModal('✅ เสร็จสิ้น', `จบรอบที่ ${testSets.current} แล้ว เตรียมเริ่มรอบต่อไป`, false);
+                changeSet(1);
+                performReset(true);
+            }
+        }
+
+        function saveRunnerScore(id) {
+            if (totalCumulativeLaps === 0 && !isRunning) {
+                 showModal('⚠️ เตือน', 'ต้องเริ่มวิ่งก่อนจึงจะบันทึกผลได้', true);
+                 return;
+            }
+            const key = `${testSets.current}-${id}`;
+            if (testSets.data[key]) {
+                delete testSets.data[key];
+            } else {
+                testSets.data[key] = {
+                    runnerId: id,
+                    set: testSets.current,
+                    score: totalCumulativeLaps,
+                    levelLap: getFormattedScore(totalCumulativeLaps),
+                    distance: totalCumulativeLaps * 20,
+                    time: document.getElementById('total-time').innerText,
+                    maxSpeed: getMaxSpeed(totalCumulativeLaps).toFixed(1)
+                };
+            }
+            renderRunnerScores();
+        }
+
+        // Helper functions from original code
+        function getMaxSpeed(laps) {
+            if (laps <= 0) return 0.0;
+            let speed = pacerData[0].speed;
+            for(let d of pacerData) {
+                if(laps >= d.cumulative) speed = d.speed;
+                else break;
+            }
+            return speed;
+        }
+
+        function getFormattedScore(laps) {
+            if (laps <= 0) return "Level 1 - Lap 0";
+            // Logic to find exact Level-Lap
+            for(let i=pacerData.length-1; i>=0; i--) {
+                const prevCum = i>0 ? pacerData[i-1].cumulative : 0;
+                if(laps > prevCum) {
+                    return `Level ${pacerData[i].level} - Lap ${laps - prevCum}`;
+                }
+            }
+            return "Level 1 - Lap 1";
+        }
+
+        function renderRunnerScores() {
+            const list = document.getElementById('saved-results-list');
+            list.innerHTML = '';
+            
+            // Group and Sort
+            let items = Object.values(testSets.data).sort((a,b) => {
+                if(a.set !== b.set) return a.set - b.set;
+                return a.runnerId - b.runnerId;
+            });
+
+            if (items.length === 0) {
+                list.innerHTML = '<li>ยังไม่มีการบันทึกผล</li>';
+            } else {
+                let lastSet = 0;
+                items.forEach(s => {
+                    if (s.set !== lastSet) {
+                         const h = document.createElement('li');
+                         h.className = 'results-title';
+                         h.innerText = `ชุดที่ ${s.set}`;
+                         h.style.borderBottom = "1px solid #ddd";
+                         list.appendChild(h);
+                         lastSet = s.set;
+                    }
+                    const li = document.createElement('li');
+                    li.innerHTML = `<span class="runner-id">#${s.runnerId}</span> <span class="runner-score-detail">${s.levelLap} | ${s.score} รอบ (${s.distance} ม.) | MRS: ${s.maxSpeed}</span>`;
+                    list.appendChild(li);
+                });
+            }
+            setupRunnerButtons();
+        }
+
+        function setupRunnerButtons() {
+            const grid = document.getElementById('runner-buttons');
+            grid.innerHTML = '';
+            for (let i = 1; i <= 10; i++) {
+                const btn = document.createElement('button');
+                btn.className = 'runner-score-btn runner-id-' + i;
+                const key = `${testSets.current}-${i}`;
+                if (testSets.data[key]) {
+                    btn.classList.add('recorded');
+                    btn.innerText = `#${i} (${testSets.data[key].score})`;
+                } else {
+                    btn.innerText = `#${i}`;
+                }
+                btn.onclick = () => saveRunnerScore(i);
+                grid.appendChild(btn);
+            }
+        }
+
+        function toggleButtonsState() {
+            const hasData = Object.keys(testSets.data).length > 0;
+            document.getElementById('start-btn').style.display = isRunning || isPaused ? 'none' : 'inline-block';
+            document.getElementById('pause-btn').style.display = isRunning || isPaused ? 'inline-block' : 'none';
+            document.getElementById('reset-btn').style.display = (isRunning || isPaused || hasData) ? 'inline-block' : 'none';
+            document.getElementById('pdf-export-btn').style.display = hasData ? 'inline-block' : 'none';
+            document.getElementById('export-options-container').style.display = hasData ? 'flex' : 'none';
+            document.getElementById('next-set-btn').style.display = (isRunning || isPaused) ? 'inline-block' : 'none';
+            
+            document.getElementById('totalSets').disabled = isRunning;
+            document.querySelectorAll('.set-nav-btn').forEach(b => b.disabled = isRunning);
+        }
+
+        function performReset(keepScores) {
+            clearInterval(timerInterval);
+            isRunning = false;
+            isPaused = false;
+            startTime = 0;
+            currentLevelIndex = 0;
+            currentShuttleCount = 0;
+            totalCumulativeLaps = 0;
+            if(!keepScores) {
+                testSets.data = {};
+                testSets.current = 1;
+                document.getElementById('totalSets').value = 1;
+                document.getElementById('currentSetDisplay').innerText = 1;
+            }
+            renderRunnerScores();
+            updateDisplay(); // Reset display numbers
+            document.getElementById('status-text').innerText = "Ready to Start";
+            toggleButtonsState();
+        }
+
+        function resetTest() {
+            showPasswordModal(() => {
+                performReset(false);
+                showModal('✅ สำเร็จ', 'ล้างข้อมูลเรียบร้อย', false);
+            });
+        }
+        
+        function finishTestAndAdvance() {
+            finishTest(true);
+        }
+
+        function exportToPDF() {
+            if (typeof window.jspdf === 'undefined') {
+                 showModal('❌ Error', 'jsPDF Library not loaded. Check internet.', true);
+                 return;
+            }
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            const exportAll = document.getElementById('exportAllSets').checked;
+            
+            doc.setFont("Helvetica", "bold");
+            doc.text("20m-SRT Test Results", 14, 20);
+            doc.setFont("Helvetica", "normal");
+            doc.setFontSize(10);
+            
+            let y = 30;
+            let items = Object.values(testSets.data).filter(d => exportAll || d.set === testSets.current);
+            
+            // Sort
+             items.sort((a,b) => {
+                if(a.set !== b.set) return a.set - b.set;
+                return a.runnerId - b.runnerId;
+            });
+
+            if(items.length === 0) {
+                showModal('⚠️', 'ไม่มีข้อมูลสำหรับ Export', true);
+                return;
+            }
+
+            let lastSet = 0;
+            items.forEach(s => {
+                if (y > 280) { doc.addPage(); y = 20; }
+                if (s.set !== lastSet) {
+                    y += 5;
+                    doc.setFont("Helvetica", "bold");
+                    doc.text(`Set ${s.set}`, 14, y);
+                    doc.setFont("Helvetica", "normal");
+                    y += 7;
+                    lastSet = s.set;
+                }
+                doc.text(`Runner #${s.runnerId}: ${s.score} laps (${s.distance}m) - MRS: ${s.maxSpeed} km/h - Time: ${s.time}`, 14, y);
+                y += 7;
+            });
+            doc.save("srt_results.pdf");
+        }
+
+        function changeSet(val) {
+            let next = testSets.current + val;
+            if (next >= 1 && next <= testSets.total) {
+                testSets.current = next;
+                document.getElementById('currentSetDisplay').innerText = next;
+                renderRunnerScores();
+            }
+        }
+
+        function updateTotalSets(v) { testSets.total = parseInt(v); }
+
+        // Prevent Tab Close
+        window.addEventListener('beforeunload', (e) => {
+            if (isRunning) {
+                e.preventDefault();
+                e.returnValue = '';
+            }
+        });
+
+        window.onload = () => {
+            setupRunnerButtons();
+            // Init audio immediately on load if possible, though usually needs user gesture
+            updateAudioStatus("💤 Waiting for user interaction...", "ready");
         };
     </script>
 </body>
