@@ -3,11 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>20m-SRT - Office Ready</title>
+    <title>20m-SRT - Landscape 5 Cols</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script> 
     <script>
-        // เช็คว่าโหลดไลบรารีสำเร็จไหม ถ้าไม่ (Offline) จะใช้โหมด Print แทน
         window.isPdfLibLoaded = typeof window.jspdf !== 'undefined';
     </script>
 
@@ -23,7 +22,6 @@
             --countdown-color: #e74c3c; 
             --pause-color: #f39c12; 
             --speed-color: #9b59b6; 
-            --pilot-color: #16a085;
             --shadow: 0 4px 20px rgba(0,0,0,0.08);
             --font-main: 'Sarabun', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
@@ -32,438 +30,283 @@
             font-family: var(--font-main);
             background-color: var(--bg-color);
             color: var(--text-main);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            margin: 0;
-            padding: 20px;
         }
 
         .container {
-            text-align: center;
             background-color: var(--container-bg);
-            padding: 40px;
+            padding: 20px;
             border-radius: 20px;
             box-shadow: var(--shadow);
-            width: 90%;
-            max-width: 800px;
-            position: relative;
+            width: 98%; /* กว้างเกือบเต็มจอ */
+            max-width: 1600px;
+            text-align: center;
         }
 
-        /* Audio Status Indicator */
+        /* Header Area */
+        .header-area {
+            margin-bottom: 20px;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+
+        h1 {
+            margin: 0 0 10px 0;
+            font-size: 24px;
+            color: var(--accent-color);
+        }
+
         .audio-status-bar {
             background-color: #f8f9fa;
             border: 1px solid #dee2e6;
             color: #6c757d;
-            padding: 8px;
-            border-radius: 8px;
+            padding: 5px 15px;
+            border-radius: 20px;
             font-size: 12px;
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            transition: all 0.3s;
+            display: inline-block;
         }
-        .audio-status-bar.ready {
-            background-color: #d4edda;
-            border-color: #c3e6cb;
-            color: #155724;
-        }
-        .audio-status-bar.error {
-            background-color: #f8d7da;
-            border-color: #f5c6cb;
-            color: #721c24;
-        }
+        .audio-status-bar.ready { background-color: #d4edda; color: #155724; }
+        .audio-status-bar.error { background-color: #f8d7da; color: #721c24; }
 
-        h1 {
-            margin-bottom: 30px;
-            margin-top: 10px;
-            font-size: 28px;
-            color: var(--accent-color);
-            font-weight: 700;
-        }
-        
-        .display-grid {
+        /* --- 5 Column Grid Layout --- */
+        .main-layout {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
+            grid-template-columns: repeat(5, 1fr); /* แบ่ง 5 ช่องเท่ากัน */
             gap: 15px;
-            margin-bottom: 25px;
-        }
-        
-        @media (min-width: 600px) {
-            .display-grid { grid-template-columns: repeat(3, 1fr); }
+            align-items: start;
         }
 
+        /* Column Styles */
+        .layout-col {
+            background: #fff;
+            padding: 10px;
+            border-radius: 12px;
+            border: 1px solid #eee;
+            min-height: 400px; /* ความสูงขั้นต่ำเพื่อให้ดูสวยงาม */
+            display: flex;
+            flex-direction: column;
+        }
+
+        .col-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: var(--text-sub);
+            margin-bottom: 15px;
+            border-bottom: 2px solid var(--accent-color);
+            padding-bottom: 5px;
+            text-transform: uppercase;
+        }
+
+        /* Col 1: Stats */
+        .stats-vertical {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
         .stat-box {
             background-color: #f8f9fa;
             border: 1px solid #e9ecef;
-            padding: 15px;
-            border-radius: 12px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
+            padding: 10px;
+            border-radius: 8px;
         }
-
-        .stat-label {
-            font-size: 13px;
-            color: var(--text-sub);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 5px;
-            font-weight: 600;
-        }
-
-        .stat-value {
-            font-size: 32px;
-            font-weight: 700;
-            color: var(--text-main);
-        }
-
-        #cum-stat-box {
-            grid-column: 1 / -1;
-            background-color: var(--highlight-color);
-            color: white;
-            padding: 25px;
-            border: 3px solid #f9fafb; 
-        }
+        .stat-label { font-size: 11px; color: var(--text-sub); text-transform: uppercase; font-weight: 600; }
+        .stat-value { font-size: 24px; font-weight: 700; color: var(--text-main); }
+        #cum-stat-box { background-color: var(--highlight-color); color: white; border: none; }
         #cum-stat-box .stat-label { color: white; }
-        #cum-display { color: white !important; font-size: 56px; }
+        #cum-display { color: white; font-size: 36px; }
 
-        #dist-display { color: var(--accent-color); } 
-        #speed-display { color: var(--speed-color); }
-
-        .timer-display {
-            font-size: 20px;
-            color: var(--text-sub);
-            margin-top: 15px;
-            font-variant-numeric: tabular-nums;
-            font-weight: 500;
-        }
-        
-        #total-time {
-            color: var(--timer-color);
-            font-weight: 700;
-            font-size: 24px;
-        }
-        
-        .score-display {
-            background-color: #edf7ed;
-            color: #1e4620;
-            padding: 15px;
-            border-radius: 8px;
-            margin-top: 15px;
-            font-size: 18px;
-            font-weight: 600;
-            border: 1px solid #c8e6c9;
-            line-height: 1.5;
-        }
-        
-        #score-text {
-            color: #2e7d32;
-            font-weight: 700;
-            font-size: 20px;
-            display: block;
-            margin-top: 5px;
-        }
-        
-        .score-buttons-container {
-            margin-top: 30px;
-            padding: 15px;
-            border-top: 1px solid #ddd;
-            border-bottom: 1px solid #ddd;
-            background-color: #fcfcfc;
-            border-radius: 10px;
-        }
-
-        .score-label-btn {
-            font-size: 16px;
-            font-weight: 600;
-            color: var(--text-main);
-            margin-bottom: 10px;
-        }
-
-        .runner-buttons-grid {
-            display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            gap: 8px;
-        }
-
-        @media (min-width: 600px) {
-            .runner-buttons-grid { grid-template-columns: repeat(10, 1fr); }
-        }
-        
-        .runner-score-btn {
-            background-color: #34495e;
-            color: white;
-            border: none;
-            padding: 10px;
-            font-size: 16px;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: background-color 0.2s;
-            line-height: 1;
-        }
-        .runner-score-btn.recorded {
-            background-color: var(--timer-color);
-            font-weight: bold;
-        }
-
-        .saved-results-container {
-            margin-top: 30px;
-            text-align: left;
-            padding: 10px;
-            background-color: #f8f9fa;
-            border-radius: 12px;
-        }
-
-        .results-title {
-            font-size: 20px;
-            color: var(--highlight-color);
-            margin-bottom: 10px;
-            border-bottom: 2px solid var(--highlight-color);
-            padding-bottom: 5px;
-            font-weight: 700;
-        }
-
-        .results-list {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
-
-        .results-list li {
-            padding: 8px 0;
-            border-bottom: 1px dashed #eee;
-            font-size: 16px;
-            color: var(--text-main);
-            display: flex;
-            flex-direction: column;
-        }
-        .runner-id {
-            font-weight: bold;
-            color: var(--accent-color);
-        }
-        .runner-score-detail {
-            color: #555;
-            font-size: 14px;
-        }
-
-        .button-group {
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-            margin-top: 25px;
-            flex-wrap: wrap;
-            width: 100%;
-        }
-        
-        button.action-btn {
-            background-color: var(--accent-color);
-            color: #fff;
-            border: none;
-            padding: 18px 40px;
-            font-size: 20px;
-            font-weight: 600;
-            border-radius: 50px;
-            cursor: pointer;
-            box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
-            min-width: 180px;
-            transition: transform 0.2s;
-        }
-        button.action-btn:hover { transform: translateY(-2px); }
-
-        .progress-bar {
-            width: 100%;
-            height: 12px;
-            background-color: #e9ecef;
-            border-radius: 6px;
-            margin-top: 25px;
-            overflow: hidden;
-        }
-
-        .progress-fill {
-            height: 100%;
-            background-color: var(--accent-color);
-            width: 0%;
-            transition: width 0.1s linear;
-        }
-
-        .status-text {
-            margin-top: 20px;
-            font-size: 22px;
-            font-weight: 600;
-            height: 30px;
-        }
-
+        /* Col 2: Timer */
         .next-beep-box {
-            background-color: #fff3cd; 
-            border: 1px solid #ffeeba;
-            padding: 15px;
-            border-radius: 12px;
-            margin-bottom: 20px;
+            background-color: #fff3cd; border: 1px solid #ffeeba;
+            padding: 20px 10px; border-radius: 12px; margin-bottom: 20px;
         }
+        #countdown-display { color: var(--countdown-color); font-size: 48px; font-weight: bold; }
         
-        #countdown-display {
-            color: var(--countdown-color);
-            font-size: 36px;
+        .timer-display { font-size: 18px; color: var(--text-sub); margin-bottom: 15px; }
+        #total-time { color: var(--timer-color); font-size: 28px; font-weight: bold; display: block; }
+        
+        .progress-bar { width: 100%; height: 15px; background-color: #e9ecef; border-radius: 8px; overflow: hidden; margin-top: auto; }
+        .progress-fill { height: 100%; background-color: var(--accent-color); width: 0%; transition: width 0.1s linear; }
+
+        /* Col 3: Controls */
+        .status-text {
+            font-size: 24px; font-weight: 700; color: var(--text-main);
+            min-height: 40px; margin-bottom: 20px; display: flex; align-items: center; justify-content: center;
         }
-        
-        /* Modal Styles */
+        .button-group { display: flex; flex-direction: column; gap: 10px; width: 100%; }
+        button.action-btn {
+            width: 100%; padding: 15px; font-size: 16px; font-weight: 600;
+            border: none; border-radius: 10px; cursor: pointer; color: white;
+            background-color: var(--accent-color); box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.1s;
+        }
+        button.action-btn:active { transform: scale(0.98); }
+        .score-info-box {
+            margin-top: 20px; padding: 10px; background-color: #edf7ed;
+            border: 1px solid #c8e6c9; border-radius: 8px; color: #1e4620; font-size: 14px;
+        }
+
+        /* Col 4: Inputs */
+        .runner-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr); /* 2 ปุ่มต่อแถว */
+            gap: 8px;
+            overflow-y: auto;
+        }
+        .runner-score-btn {
+            background-color: #34495e; color: white; border: none;
+            padding: 15px 5px; font-size: 14px; border-radius: 8px; cursor: pointer;
+        }
+        .runner-score-btn.recorded { background-color: var(--timer-color); font-weight: bold; border: 2px solid #1e8449; }
+        .runner-score-btn:hover { opacity: 0.9; }
+
+        /* Col 5: Results */
+        .results-container {
+            flex-grow: 1; overflow-y: auto; max-height: 500px;
+            background-color: #f8f9fa; border-radius: 8px; padding: 10px;
+        }
+        .results-list { list-style: none; padding: 0; margin: 0; text-align: left; }
+        .results-list li {
+            padding: 8px; border-bottom: 1px solid #eee; font-size: 13px;
+        }
+        .runner-id { font-weight: bold; color: var(--accent-color); display: inline-block; width: 30px; }
+
+        /* Modal */
         .modal-overlay {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 1000;
         }
-        
-        .modal-content {
-            background: white;
-            padding: 30px;
-            border-radius: 15px;
-            width: 90%;
-            max-width: 500px;
-            text-align: left;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        .modal-content { background: white; padding: 20px; border-radius: 10px; width: 90%; max-width: 400px; }
+        .modal-btn { padding: 8px 16px; border: none; border-radius: 5px; cursor: pointer; margin-left: 10px; font-weight: bold; }
+        .modal-cancel-btn { background: #eee; } .modal-confirm-btn { background: #e74c3c; color: white; }
+
+        /* Responsive: Stack on Tablet/Mobile */
+        @media (max-width: 1200px) {
+            .main-layout { grid-template-columns: repeat(3, 1fr); }
+            /* จัดกลุ่มใหม่เมื่อจอเล็กลง */
+            .col-results { grid-column: 1 / -1; }
         }
-        
-        .modal-btn {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 25px;
-            cursor: pointer;
-            font-weight: 600;
-            margin-left: 10px;
+        @media (max-width: 768px) {
+            .main-layout { grid-template-columns: 1fr; }
         }
 
-        .modal-confirm-btn { background-color: #e74c3c; color: white; }
-        .modal-cancel-btn { background-color: #ecf0f1; color: var(--text-main); }
-
-        /* --- PRINT STYLES FOR OFFLINE OFFICE USE --- */
+        /* Print Style */
         @media print {
-            body { 
-                background-color: white; 
-                color: black; 
-                padding: 0;
-            }
-            .container { 
-                box-shadow: none; 
-                border: none; 
-                width: 100%; 
-                max-width: 100%; 
-                padding: 0; 
-                margin: 0;
-            }
-            /* ซ่อนส่วนควบคุมเมื่อปริ้นท์ */
-            .audio-status-bar, 
-            .display-grid, 
-            .next-beep-box, 
-            .score-buttons-container, 
-            .progress-bar, 
-            .button-group, 
-            #status-text, 
-            .modal-overlay,
-            .timer-display,
-            .score-display,
-            .control-row {
-                display: none !important;
-            }
-            
-            /* จัดรูปแบบส่วนหัวและผลลัพธ์ */
-            h1 { font-size: 24px; margin-bottom: 10px; color: black; border-bottom: 2px solid #000; padding-bottom: 10px; }
-            .saved-results-container { margin-top: 0; background-color: white; padding: 0; }
-            .results-title { color: black; font-size: 18px; border-bottom: 1px solid #000; margin-top: 20px; }
-            .results-list li { border-bottom: 1px solid #ccc; page-break-inside: avoid; }
-            .runner-id { color: #000; }
-            .runner-score-detail { color: #333; }
+            body { background: white; padding: 0; }
+            .container { box-shadow: none; width: 100%; max-width: 100%; }
+            .header-area, .layout-col, .button-group { display: none !important; }
+            /* แสดงเฉพาะผลลัพธ์ตอนปริ้นท์แบบ Native */
+            .col-results { display: block !important; border: none; }
+            .results-container { max-height: none; overflow: visible; background: white; }
         }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <div id="audio-status" class="audio-status-bar">
-            <span>🔌 Waiting for Audio...</span>
-        </div>
-
-        <h1>20m-SRT (Shuttle Run Test)</h1>
-        
-        <div class="display-grid">
-            <div class="stat-box" id="cum-stat-box">
-                <div class="stat-label">Cumulative Laps (รวมรอบ)</div>
-                <div class="stat-value" id="cum-display">0</div> 
-            </div>
-            <div class="stat-box">
-                <div class="stat-label">Level</div>
-                <div class="stat-value" id="level-display">1</div>
-            </div>
-            <div class="stat-box">
-                <div class="stat-label">Laps</div>
-                <div class="stat-value" id="shuttle-display">1</div>
-            </div>
-            <div class="stat-box">
-                <div class="stat-label">Speed</div>
-                <div class="stat-value" id="speed-display">8.5</div>
-                <div class="stat-label" style="font-size: 10px; margin-top: -5px;">km/h</div>
-            </div>
-            <div class="stat-box">
-                <div class="stat-label">Distance (m)</div>
-                <div class="stat-value" id="dist-display">0</div>
+        <div class="header-area">
+            <h1>20m-SRT (Landscape View)</h1>
+            <div id="audio-status" class="audio-status-bar">
+                <span>🔌 Waiting for Audio...</span>
             </div>
         </div>
 
-        <div class="next-beep-box">
-             <div class="stat-label" style="color: #856404;">Next Beep In (วินาที)</div>
-             <div class="stat-value" id="countdown-display">0.00</div>
-        </div>
+        <div class="main-layout">
+            
+            <div class="layout-col col-stats">
+                <div class="col-title">📊 สถิติ</div>
+                <div class="stats-vertical">
+                    <div class="stat-box" id="cum-stat-box">
+                        <div class="stat-label">รวมรอบ (Laps)</div>
+                        <div class="stat-value" id="cum-display">0</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">Level</div>
+                        <div class="stat-value" id="level-display">1</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">Shuttle</div>
+                        <div class="stat-value" id="shuttle-display">1</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">Speed (km/h)</div>
+                        <div class="stat-value" id="speed-display">8.5</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">Distance (m)</div>
+                        <div class="stat-value" id="dist-display">0</div>
+                    </div>
+                </div>
+            </div>
 
-        <div class="timer-display">Total Time: <span id="total-time">00:00</span></div>
-        
-        <div class="score-display">
-            บันทึกผล (Score): <span id="score-text">Level 1 - Lap 0 | รวม 0 รอบ | 0 ม. | MRS: 0.0 km/h</span>
-        </div>
-        
-        <div class="status-text" id="status-text">Ready to Start</div>
-        
-        <div class="score-buttons-container">
-            <div class="score-label-btn">บันทึกผลผู้ทดสอบ (คีย์ลัด: 1-9 และ 0 แทน 10):</div>
-            <div id="runner-buttons" class="runner-buttons-grid"></div>
-        </div>
+            <div class="layout-col col-timer">
+                <div class="col-title">⏱️ เวลา</div>
+                <div class="next-beep-box">
+                    <div class="stat-label" style="color: #856404; margin-bottom: 5px;">Next Beep In</div>
+                    <div id="countdown-display">0.00</div>
+                </div>
+                <div class="timer-display">
+                    <div>Total Time:</div>
+                    <span id="total-time">00:00</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-fill"></div>
+                </div>
+            </div>
 
-        <div class="progress-bar">
-            <div class="progress-fill" id="progress-fill"></div>
-        </div>
-        
-        <div class="button-group">
-            <button id="start-btn" class="action-btn" onclick="startTest()">START TEST (Space)</button>
-            <button id="pause-btn" class="action-btn" onclick="togglePause()" style="display: none; background-color: var(--pause-color);">PAUSE (Space)</button>
-            <button id="pdf-export-btn" class="action-btn" onclick="handleExport()" style="display: none;">⬇️ ส่งออกเป็น PDF / Print (S)</button>
-        </div>
-        
-        <div class="saved-results-container">
-            <h2 class="results-title">ผลการบันทึก:</h2>
-            <ul id="saved-results-list" class="results-list">
-                <li>ยังไม่มีการบันทึกผลผู้ทดสอบ</li>
-            </ul>
+            <div class="layout-col col-controls">
+                <div class="col-title">🎮 ควบคุม</div>
+                <div class="status-text" id="status-text">Ready</div>
+                
+                <div class="button-group">
+                    <button id="start-btn" class="action-btn" onclick="startTest()">▶ START (Space)</button>
+                    <button id="pause-btn" class="action-btn" onclick="togglePause()" style="display: none; background-color: var(--pause-color);">⏸ PAUSE (Space)</button>
+                    <button id="pdf-export-btn" class="action-btn" onclick="handleExport()" style="display: none; background-color: #2c3e50;">⬇ PDF / Print (S)</button>
+                </div>
+
+                <div class="score-info-box">
+                    <strong>Current Pace:</strong><br>
+                    <span id="score-text">Lvl 1 - Lap 0</span>
+                </div>
+            </div>
+
+            <div class="layout-col col-inputs">
+                <div class="col-title">🏃 ผู้ทดสอบ (1-10)</div>
+                <div id="runner-buttons" class="runner-grid">
+                    </div>
+                <div style="font-size: 11px; color: #999; margin-top: 10px; text-align: center;">
+                    กด 0 แทนคนที่ 10
+                </div>
+            </div>
+
+            <div class="layout-col col-results">
+                <div class="col-title">📝 บันทึกผล</div>
+                <div class="results-container">
+                    <ul id="saved-results-list" class="results-list">
+                        <li style="text-align:center; color:#999;">- รอการบันทึก -</li>
+                    </ul>
+                </div>
+            </div>
+
         </div>
     </div>
 
     <div class="modal-overlay" id="custom-modal">
         <div class="modal-content">
-            <div id="modal-title" style="font-weight: bold; margin-bottom: 10px; font-size: 20px;">ℹ️ แจ้งเตือน</div>
-            <div id="modal-body" style="margin-bottom: 20px; line-height: 1.5;"></div>
+            <div id="modal-title" style="font-weight: bold; margin-bottom: 10px; font-size: 18px;">ℹ️ แจ้งเตือน</div>
+            <div id="modal-body" style="margin-bottom: 20px;"></div>
+            <input type="password" id="modal-input" style="display:none; width: 100%; padding: 8px; margin-bottom: 10px;" placeholder="Password">
             <div id="modal-actions" style="display:flex; justify-content: flex-end;"></div>
         </div>
     </div>
 
     <script>
-        // === Audio & Bluetooth Handling (FIXED) ===
+        // === Audio & Logic (Same as before) ===
         let audioCtx = null;
         const statusDiv = document.getElementById('audio-status');
 
@@ -475,67 +318,30 @@
         function initAudio() {
             if (!audioCtx) {
                 audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                
                 audioCtx.onstatechange = () => {
-                    if (audioCtx.state === 'running') {
-                        updateAudioStatus("📡 Audio Active (Bluetooth Ready)", "ready");
-                    } else if (audioCtx.state === 'suspended' || audioCtx.state === 'interrupted') {
-                        updateAudioStatus("⚠️ Audio Suspended - Click to Resume", "error");
-                    }
+                    if (audioCtx.state === 'running') updateAudioStatus("🔊 Audio Ready", "ready");
+                    else updateAudioStatus("🔇 Suspended", "error");
                 };
             }
-            
-            if (audioCtx.state === 'suspended') {
-                audioCtx.resume();
-            }
-            
-            updateAudioStatus("📡 Audio Active (Bluetooth Ready)", "ready");
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            updateAudioStatus("🔊 Audio Ready", "ready");
         }
 
-        if (navigator.mediaDevices && navigator.mediaDevices.addEventListener) {
-            navigator.mediaDevices.addEventListener('devicechange', async () => {
-                console.log("Device change detected. Re-syncing...");
-                updateAudioStatus("🔄 Re-syncing Audio Device...", "error");
-                
-                if (audioCtx) {
-                    try {
-                        if (audioCtx.state !== 'running') {
-                            await audioCtx.resume();
-                        }
-                        if (isRunning) playTone(0.1, 500); 
-                    } catch (e) {
-                        console.error("Audio resume failed:", e);
-                    }
-                }
-            });
-        }
-
-        // 500Hz Beep (Middle frequency)
         function playTone(duration = 0.7, freq = 500) {
             if (!audioCtx) initAudio();
-            if (audioCtx.state === 'suspended' || audioCtx.state === 'interrupted') {
-                audioCtx.resume();
-            }
-
+            if (audioCtx.state === 'suspended') audioCtx.resume();
             const osc = audioCtx.createOscillator();
             const gain = audioCtx.createGain();
-
             osc.connect(gain);
             gain.connect(audioCtx.destination);
-
-            osc.type = 'sine'; 
-            osc.frequency.value = freq;
-            
-            // เพิ่มความดังเป็น 1.0 (จากเดิม 0.5) = 200%
+            osc.type = 'sine'; osc.frequency.value = freq;
             gain.gain.setValueAtTime(0, audioCtx.currentTime);
             gain.gain.linearRampToValueAtTime(1.0, audioCtx.currentTime + 0.05); 
             gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + duration - 0.1);
-
-            osc.start();
-            osc.stop(audioCtx.currentTime + duration);
+            osc.start(); osc.stop(audioCtx.currentTime + duration);
         }
 
-        // === TTS ===
+        // TTS
         let thaiVoice = null;
         if ('speechSynthesis' in window) {
             speechSynthesis.onvoiceschanged = () => {
@@ -543,30 +349,20 @@
                  thaiVoice = voices.find(v => v.lang === 'th-TH') || null;
             };
         }
-
         function speak(text) {
              if (!('speechSynthesis' in window)) return;
              speechSynthesis.cancel(); 
              const u = new SpeechSynthesisUtterance(text);
-             u.lang = 'th-TH';
-             u.rate = 1.0;
-             u.pitch = 1.2;
+             u.lang = 'th-TH'; u.rate = 1.0; u.pitch = 1.2;
              if (thaiVoice) u.voice = thaiVoice;
              speechSynthesis.speak(u);
         }
 
-        // === State Management ===
+        // Logic Variables
         let testSets = { total: 1, current: 1, data: {} };
-        let currentLevelIndex = 0;
-        let currentShuttleCount = 0;
-        let totalCumulativeLaps = 0;
-        let isRunning = false;
-        let isPaused = false;
-        let startTime = 0;
-        let timerInterval;
-        let shuttleStartTime = 0;
-        let shuttleDuration = 0;
-        let pauseStartTimestamp = 0;
+        let currentLevelIndex = 0, currentShuttleCount = 0, totalCumulativeLaps = 0;
+        let isRunning = false, isPaused = false;
+        let startTime = 0, timerInterval, shuttleStartTime = 0, shuttleDuration = 0, pauseStartTimestamp = 0;
 
         const pacerData = [
             { level: 1,  shuttles: 7,  seconds: 8.47, speed: 8.5, cumulative: 7 },
@@ -592,22 +388,19 @@
             { level: 21, shuttles: 15, seconds: 3.89, speed: 18.5, cumulative: 237 }
         ];
 
-        function closeModal() {
-            document.getElementById('custom-modal').style.display = 'none';
-        }
-
-        function showModal(title, message, isError = false) {
+        // UI Helpers
+        function closeModal() { document.getElementById('custom-modal').style.display = 'none'; }
+        function showModal(title, message) {
             document.getElementById('modal-title').innerText = title;
-            document.getElementById('modal-title').style.color = isError ? '#e74c3c' : '#e67e22';
             document.getElementById('modal-body').innerText = message;
             document.getElementById('modal-actions').innerHTML = `<button class="modal-btn modal-cancel-btn" onclick="closeModal()">OK</button>`;
             document.getElementById('custom-modal').style.display = 'flex';
         }
 
+        // Core Functions
         function startTest() {
             if (isRunning) return;
             initAudio();
-            
             let countdown = 6;
             document.getElementById('status-text').innerText = `Starting...`;
             document.getElementById('start-btn').style.display = 'none';
@@ -615,11 +408,8 @@
             const preInterval = setInterval(() => {
                 countdown--;
                 if (countdown > 0) {
-                    document.getElementById('status-text').innerText = `Starting in ${countdown}...`;
-                    if (countdown <= 5) {
-                        const thaiNum = ["", "หนึ่ง", "สอง", "สาม", "สี่", "ห้า"];
-                        speak(thaiNum[countdown]);
-                    }
+                    document.getElementById('status-text').innerText = `In ${countdown}...`;
+                    if (countdown <= 5) speak(["", "หนึ่ง", "สอง", "สาม", "สี่", "ห้า"][countdown]);
                 } else {
                     clearInterval(preInterval);
                     document.getElementById('status-text').innerText = "RUN!";
@@ -630,15 +420,10 @@
         }
 
         function beginPacerLogic() {
-            isRunning = true;
-            isPaused = false;
+            isRunning = true; isPaused = false;
             startTime = Date.now();
-            currentLevelIndex = 0;
-            currentShuttleCount = 0;
-            totalCumulativeLaps = 0;
-            toggleButtonsState();
-            startShuttle();
-            startInterval();
+            currentLevelIndex = 0; currentShuttleCount = 0; totalCumulativeLaps = 0;
+            toggleButtonsState(); startShuttle(); startInterval();
         }
 
         function startShuttle() {
@@ -659,9 +444,7 @@
                 document.getElementById('countdown-display').innerText = remaining.toFixed(2);
                 document.getElementById('progress-fill').style.width = `${(elapsed / shuttleDuration) * 100}%`;
 
-                if (remaining <= 0.05) { 
-                    nextShuttle();
-                }
+                if (remaining <= 0.05) nextShuttle();
             }, 20); 
         }
 
@@ -669,18 +452,11 @@
             totalCumulativeLaps++;
             const data = pacerData[currentLevelIndex];
             currentShuttleCount++;
-
             if (currentShuttleCount > data.shuttles) {
-                currentLevelIndex++;
-                currentShuttleCount = 1; 
-                if (currentLevelIndex >= pacerData.length) {
-                    finishTest();
-                    return;
-                }
+                currentLevelIndex++; currentShuttleCount = 1; 
+                if (currentLevelIndex >= pacerData.length) { finishTest(); return; }
             }
-            
-            playTone();
-            startShuttle();
+            playTone(); startShuttle();
         }
 
         function updateDisplay() {
@@ -693,7 +469,7 @@
             
             const mrs = getMaxSpeed(totalCumulativeLaps);
             const scoreStr = getFormattedScore(totalCumulativeLaps);
-            document.getElementById('score-text').innerText = `${scoreStr} | MRS: ${mrs.toFixed(1)} km/h | รวม ${totalCumulativeLaps} รอบ`;
+            document.getElementById('score-text').innerText = `${scoreStr}`;
         }
 
         function formatTime(ms) {
@@ -706,44 +482,33 @@
             if (isPaused) {
                 pauseStartTimestamp = Date.now();
                 document.getElementById('status-text').innerText = "PAUSED";
-                document.getElementById('pause-btn').innerText = "RESUME (Space)";
+                document.getElementById('pause-btn').innerText = "RESUME";
                 document.getElementById('pause-btn').style.backgroundColor = '#27ae60';
             } else {
                 const diff = Date.now() - pauseStartTimestamp;
-                startTime += diff;
-                shuttleStartTime += diff;
-                document.getElementById('status-text').innerText = "Running...";
-                document.getElementById('pause-btn').innerText = "PAUSE (Space)";
+                startTime += diff; shuttleStartTime += diff;
+                document.getElementById('status-text').innerText = "RUN!";
+                document.getElementById('pause-btn').innerText = "PAUSE";
                 document.getElementById('pause-btn').style.backgroundColor = 'var(--pause-color)';
             }
         }
 
-        function finishTest(isManual = false) {
+        function finishTest() {
             clearInterval(timerInterval);
             isRunning = false;
             playTone(0.5, 500); playTone(0.5, 500);
-            document.getElementById('status-text').innerText = "Test Completed!";
-            document.getElementById('start-btn').innerText = "START NEW TEST (Space)";
+            document.getElementById('status-text').innerText = "FINISHED";
+            document.getElementById('start-btn').innerText = "START NEW";
             toggleButtonsState();
-            
-            if (isManual) {
-                showModal('✅ เสร็จสิ้น', `จบการทดสอบ`, false);
-            }
         }
 
         function saveRunnerScore(id) {
-            if (totalCumulativeLaps === 0 && !isRunning) {
-                 showModal('⚠️ เตือน', 'ต้องเริ่มวิ่งก่อนจึงจะบันทึกผลได้', true);
-                 return;
-            }
+            if (totalCumulativeLaps === 0 && !isRunning) { showModal('⚠️', 'เริ่มวิ่งก่อนบันทึก'); return; }
             const key = `${testSets.current}-${id}`;
-            if (testSets.data[key]) {
-                delete testSets.data[key];
-            } else {
+            if (testSets.data[key]) delete testSets.data[key];
+            else {
                 testSets.data[key] = {
-                    runnerId: id,
-                    set: testSets.current,
-                    score: totalCumulativeLaps,
+                    runnerId: id, set: testSets.current, score: totalCumulativeLaps,
                     levelLap: getFormattedScore(totalCumulativeLaps),
                     distance: totalCumulativeLaps * 20,
                     time: document.getElementById('total-time').innerText,
@@ -758,52 +523,35 @@
             if (laps <= 0) return 0.0;
             let speed = pacerData[0].speed;
             for(let d of pacerData) {
-                if(laps >= d.cumulative) speed = d.speed;
-                else break;
+                if(laps >= d.cumulative) speed = d.speed; else break;
             }
             return speed;
         }
 
         function getFormattedScore(laps) {
-            if (laps <= 0) return "Level 1 - Lap 0";
+            if (laps <= 0) return "Lvl 1 - Lap 0";
             for(let i=pacerData.length-1; i>=0; i--) {
                 const prevCum = i>0 ? pacerData[i-1].cumulative : 0;
-                if(laps > prevCum) {
-                    return `Level ${pacerData[i].level} - Lap ${laps - prevCum}`;
-                }
+                if(laps > prevCum) return `Lvl ${pacerData[i].level} - Lap ${laps - prevCum}`;
             }
-            return "Level 1 - Lap 1";
+            return "Lvl 1 - Lap 1";
         }
 
         function renderRunnerScores() {
             const list = document.getElementById('saved-results-list');
             list.innerHTML = '';
-            
-            let items = Object.values(testSets.data).sort((a,b) => {
-                if(a.set !== b.set) return a.set - b.set;
-                return a.timestamp - b.timestamp;
-            });
+            let items = Object.values(testSets.data).sort((a,b) => a.timestamp - b.timestamp);
 
-            if (items.length === 0) {
-                list.innerHTML = '<li>ยังไม่มีการบันทึกผล</li>';
-            } else {
-                let lastSet = 0;
+            if (items.length === 0) list.innerHTML = '<li style="text-align:center; color:#999;">- รอการบันทึก -</li>';
+            else {
                 items.forEach(s => {
-                    if (s.set !== lastSet) {
-                         const h = document.createElement('li');
-                         h.className = 'results-title';
-                         h.innerText = `ชุดที่ ${s.set}`;
-                         h.style.borderBottom = "1px solid #ddd";
-                         list.appendChild(h);
-                         lastSet = s.set;
-                    }
                     const li = document.createElement('li');
-                    li.innerHTML = `<span class="runner-id">#${s.runnerId}</span> <span class="runner-score-detail">${s.levelLap} | ${s.score} รอบ (${s.distance} ม.) | MRS: ${s.maxSpeed}</span>`;
+                    li.innerHTML = `<span class="runner-id">#${s.runnerId}</span> ${s.levelLap} (${s.score} รอบ)`;
                     list.appendChild(li);
                 });
             }
             setupRunnerButtons();
-            toggleButtonsState(); // อัปเดตปุ่มเมื่อข้อมูลเปลี่ยน
+            toggleButtonsState();
         }
 
         function setupRunnerButtons() {
@@ -811,11 +559,10 @@
             grid.innerHTML = '';
             for (let i = 1; i <= 10; i++) {
                 const btn = document.createElement('button');
-                btn.className = 'runner-score-btn runner-id-' + i;
-                const key = `${testSets.current}-${i}`;
-                if (testSets.data[key]) {
+                btn.className = 'runner-score-btn';
+                if (testSets.data[`${testSets.current}-${i}`]) {
                     btn.classList.add('recorded');
-                    btn.innerText = `#${i} (${testSets.data[key].score})`;
+                    btn.innerText = `#${i} ✅`;
                 } else {
                     btn.innerText = `#${i}`;
                 }
@@ -831,108 +578,52 @@
             document.getElementById('pdf-export-btn').style.display = hasData ? 'inline-block' : 'none';
         }
 
-        // ฟังก์ชัน Export ที่ฉลาดขึ้น: เลือก PDF (ถ้ามีเน็ต) หรือ Print (ถ้า Offline)
         function handleExport() {
-            if (typeof window.jspdf === 'undefined') {
-                // Offline Mode: ใช้ window.print()
-                window.print();
-            } else {
-                // Online Mode: สร้าง PDF สวยๆ
-                exportToPDF();
-            }
+            if (typeof window.jspdf === 'undefined') window.print();
+            else exportToPDF();
         }
 
         function exportToPDF() {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
-            const exportAll = true; // บังคับรวมทุกชุดเสมอ
-            
             const dateObj = new Date();
-            // สร้างวันที่และเวลา
-            const d = String(dateObj.getDate()).padStart(2, '0');
-            const m = String(dateObj.getMonth() + 1).padStart(2, '0');
-            const y = dateObj.getFullYear();
-            const hr = String(dateObj.getHours()).padStart(2, '0');
-            const min = String(dateObj.getMinutes()).padStart(2, '0');
-            
-            const timestamp = `${d}-${m}-${y} ${hr}:${min}`;
-            const filenameTimestamp = `${d}${m}${y}_${hr}${min}`;
+            const ts = `${String(dateObj.getDate()).padStart(2,'0')}-${String(dateObj.getMonth()+1).padStart(2,'0')}-${dateObj.getFullYear()} ${String(dateObj.getHours()).padStart(2,'0')}:${String(dateObj.getMinutes()).padStart(2,'0')}`;
+            const fileTs = `${String(dateObj.getDate()).padStart(2,'0')}${String(dateObj.getMonth()+1).padStart(2,'0')}${dateObj.getFullYear()}_${String(dateObj.getHours()).padStart(2,'0')}${String(dateObj.getMinutes()).padStart(2,'0')}`;
             
             doc.setFont("Helvetica", "bold");
             doc.text("20m-SRT Test Results", 14, 20);
-            doc.setFont("Helvetica", "normal");
-            doc.setFontSize(10);
-            doc.text(`Date: ${timestamp}`, 14, 26); // แสดงวันที่และเวลาใน PDF
+            doc.setFont("Helvetica", "normal"); doc.setFontSize(10);
+            doc.text(`Date: ${ts}`, 14, 26);
             
             let yPos = 35;
-            let items = Object.values(testSets.data).filter(d => exportAll || d.set === testSets.current);
-            
-             items.sort((a,b) => {
-                if(a.set !== b.set) return a.set - b.set;
-                return a.timestamp - b.timestamp; 
-            });
+            let items = Object.values(testSets.data).sort((a,b) => a.timestamp - b.timestamp);
 
-            if(items.length === 0) {
-                showModal('⚠️', 'ไม่มีข้อมูลสำหรับ Export', true);
-                return;
-            }
+            if(items.length === 0) { showModal('⚠️', 'ไม่มีข้อมูล'); return; }
 
             items.forEach(s => {
                 if (yPos > 280) { doc.addPage(); yPos = 20; }
-                
-                doc.text(`Runner #${s.runnerId}: ${s.score} laps (${s.distance}m) - MRS: ${s.maxSpeed} km/h - Time: ${s.time}`, 14, yPos);
+                // เพิ่ม ${s.distance}m ใน PDF ตรงนี้
+                doc.text(`Runner #${s.runnerId}: ${s.levelLap} (${s.score} laps - ${s.distance} m) - MRS: ${s.maxSpeed} km/h - Time: ${s.time}`, 14, yPos);
                 yPos += 7;
             });
-
-            doc.save(`PACER_Result_${filenameTimestamp}.pdf`);
+            doc.save(`PACER_Result_${fileTs}.pdf`);
         }
         
-        // --- ส่วนที่เพิ่มใหม่: จัดการคีย์ลัด (Keyboard Shortcuts) ---
+        // Keyboard Shortcuts
         document.addEventListener('keydown', function(event) {
-            // ถ้า Modal เปิดอยู่ ห้ามใช้คีย์ลัด
             if (document.getElementById('custom-modal').style.display === 'flex') return;
-
-            // 1. ปุ่ม Spacebar: เริ่ม / พัก / ทำต่อ
             if (event.code === 'Space') {
-                event.preventDefault(); // ป้องกันหน้าจอเลื่อนลง
-                
-                // กรณี: ยังไม่เริ่ม และปุ่ม Start แสดงอยู่
-                if (!isRunning && !isPaused && document.getElementById('start-btn').style.display !== 'none') {
-                    startTest();
-                }
-                // กรณี: กำลังวิ่ง หรือ พักอยู่
-                else if (isRunning || isPaused) {
-                    togglePause();
-                }
+                event.preventDefault();
+                if (!isRunning && !isPaused && document.getElementById('start-btn').style.display !== 'none') startTest();
+                else if (isRunning || isPaused) togglePause();
             }
-
-            // 2. ปุ่มตัวเลข 1-9 และ 0
-            if (event.key >= '1' && event.key <= '9') {
-                saveRunnerScore(parseInt(event.key));
-            } else if (event.key === '0') {
-                saveRunnerScore(10); // เลข 0 แทนคนทื่ 10
-            }
-
-            // 3. ปุ่ม 's' หรือ 'S': ส่งออก PDF
-            if (event.key.toLowerCase() === 's') {
-                // เช็คว่ามีปุ่มแสดงอยู่ไหม (มีข้อมูลให้ export ไหม)
-                if (document.getElementById('pdf-export-btn').style.display !== 'none') {
-                    handleExport();
-                }
-            }
+            if (event.key >= '1' && event.key <= '9') saveRunnerScore(parseInt(event.key));
+            else if (event.key === '0') saveRunnerScore(10);
+            if (event.key.toLowerCase() === 's' && document.getElementById('pdf-export-btn').style.display !== 'none') handleExport();
         });
 
-        window.addEventListener('beforeunload', (e) => {
-            if (isRunning) {
-                e.preventDefault();
-                e.returnValue = '';
-            }
-        });
-
-        window.onload = () => {
-            setupRunnerButtons();
-            updateAudioStatus("💤 Waiting for user interaction...", "ready");
-        };
+        window.addEventListener('beforeunload', (e) => { if (isRunning) { e.preventDefault(); e.returnValue = ''; } });
+        window.onload = () => { setupRunnerButtons(); };
     </script>
 </body>
 </html>
