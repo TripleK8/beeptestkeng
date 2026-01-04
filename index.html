@@ -432,7 +432,7 @@
         <div class="status-text" id="status-text">Ready to Start</div>
         
         <div class="score-buttons-container">
-            <div class="score-label-btn">บันทึกผลผู้ทดสอบ:</div>
+            <div class="score-label-btn">บันทึกผลผู้ทดสอบ (คีย์ลัด: 1-9 และ 0 แทน 10):</div>
             <div id="runner-buttons" class="runner-buttons-grid"></div>
         </div>
 
@@ -441,10 +441,9 @@
         </div>
         
         <div class="button-group">
-            <button id="start-btn" class="action-btn" onclick="startTest()">START TEST</button>
-            <button id="pause-btn" class="action-btn" onclick="togglePause()" style="display: none; background-color: var(--pause-color);">PAUSE</button>
-            <button id="pdf-export-btn" class="action-btn" onclick="handleExport()" style="display: none;">⬇️ ส่งออกเป็น PDF / Print</button>
-            <button id="reset-btn" class="action-btn" onclick="resetTest()" style="display: none; background-color: #e74c3c;">RESET ALL</button>
+            <button id="start-btn" class="action-btn" onclick="startTest()">START TEST (Space)</button>
+            <button id="pause-btn" class="action-btn" onclick="togglePause()" style="display: none; background-color: var(--pause-color);">PAUSE (Space)</button>
+            <button id="pdf-export-btn" class="action-btn" onclick="handleExport()" style="display: none;">⬇️ ส่งออกเป็น PDF / Print (S)</button>
         </div>
         
         <div class="saved-results-container">
@@ -459,7 +458,6 @@
         <div class="modal-content">
             <div id="modal-title" style="font-weight: bold; margin-bottom: 10px; font-size: 20px;">ℹ️ แจ้งเตือน</div>
             <div id="modal-body" style="margin-bottom: 20px; line-height: 1.5;"></div>
-            <input type="password" id="modal-input" style="display:none; width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 5px;" placeholder="Admin Password (1234)">
             <div id="modal-actions" style="display:flex; justify-content: flex-end;"></div>
         </div>
     </div>
@@ -569,7 +567,6 @@
         let shuttleStartTime = 0;
         let shuttleDuration = 0;
         let pauseStartTimestamp = 0;
-        const ADMIN_PASSWORD = "1234";
 
         const pacerData = [
             { level: 1,  shuttles: 7,  seconds: 8.47, speed: 8.5, cumulative: 7 },
@@ -597,44 +594,14 @@
 
         function closeModal() {
             document.getElementById('custom-modal').style.display = 'none';
-            document.getElementById('modal-input').style.display = 'none';
-            document.getElementById('modal-input').value = '';
         }
 
         function showModal(title, message, isError = false) {
             document.getElementById('modal-title').innerText = title;
             document.getElementById('modal-title').style.color = isError ? '#e74c3c' : '#e67e22';
             document.getElementById('modal-body').innerText = message;
-            document.getElementById('modal-input').style.display = 'none';
             document.getElementById('modal-actions').innerHTML = `<button class="modal-btn modal-cancel-btn" onclick="closeModal()">OK</button>`;
             document.getElementById('custom-modal').style.display = 'flex';
-        }
-
-        function showPasswordModal(onConfirmCallback) {
-            document.getElementById('modal-title').innerHTML = '🔒 ยืนยันรหัสผ่านผู้ดูแล';
-            document.getElementById('modal-title').style.color = '#e74c3c';
-            document.getElementById('modal-body').innerText = 'กรุณาใส่รหัสผ่านเพื่อยืนยันการล้างข้อมูลทั้งหมด (1234):';
-            
-            const inputField = document.getElementById('modal-input');
-            inputField.style.display = 'block';
-            inputField.value = '';
-            
-            document.getElementById('modal-actions').innerHTML = `
-                <button class="modal-btn modal-cancel-btn" onclick="closeModal()">ยกเลิก</button>
-                <button class="modal-btn modal-confirm-btn" id="modal-confirm-action">ยืนยัน</button>
-            `;
-            
-            document.getElementById('custom-modal').style.display = 'flex';
-            inputField.focus();
-
-            document.getElementById('modal-confirm-action').onclick = () => {
-                if (inputField.value === ADMIN_PASSWORD) {
-                    closeModal();
-                    onConfirmCallback();
-                } else {
-                    alert("รหัสผ่านไม่ถูกต้อง");
-                }
-            };
         }
 
         function startTest() {
@@ -739,14 +706,14 @@
             if (isPaused) {
                 pauseStartTimestamp = Date.now();
                 document.getElementById('status-text').innerText = "PAUSED";
-                document.getElementById('pause-btn').innerText = "RESUME";
+                document.getElementById('pause-btn').innerText = "RESUME (Space)";
                 document.getElementById('pause-btn').style.backgroundColor = '#27ae60';
             } else {
                 const diff = Date.now() - pauseStartTimestamp;
                 startTime += diff;
                 shuttleStartTime += diff;
                 document.getElementById('status-text').innerText = "Running...";
-                document.getElementById('pause-btn').innerText = "PAUSE";
+                document.getElementById('pause-btn').innerText = "PAUSE (Space)";
                 document.getElementById('pause-btn').style.backgroundColor = 'var(--pause-color)';
             }
         }
@@ -756,7 +723,7 @@
             isRunning = false;
             playTone(0.5, 500); playTone(0.5, 500);
             document.getElementById('status-text').innerText = "Test Completed!";
-            document.getElementById('start-btn').innerText = "START NEW TEST";
+            document.getElementById('start-btn').innerText = "START NEW TEST (Space)";
             toggleButtonsState();
             
             if (isManual) {
@@ -861,35 +828,9 @@
             const hasData = Object.keys(testSets.data).length > 0;
             document.getElementById('start-btn').style.display = isRunning || isPaused ? 'none' : 'inline-block';
             document.getElementById('pause-btn').style.display = isRunning || isPaused ? 'inline-block' : 'none';
-            document.getElementById('reset-btn').style.display = (isRunning || isPaused || hasData) ? 'inline-block' : 'none';
             document.getElementById('pdf-export-btn').style.display = hasData ? 'inline-block' : 'none';
         }
 
-        function performReset(keepScores) {
-            clearInterval(timerInterval);
-            isRunning = false;
-            isPaused = false;
-            startTime = 0;
-            currentLevelIndex = 0;
-            currentShuttleCount = 0;
-            totalCumulativeLaps = 0;
-            if(!keepScores) {
-                testSets.data = {};
-                testSets.current = 1;
-            }
-            renderRunnerScores();
-            updateDisplay(); 
-            document.getElementById('status-text').innerText = "Ready to Start";
-            toggleButtonsState();
-        }
-
-        function resetTest() {
-            showPasswordModal(() => {
-                performReset(false);
-                showModal('✅ สำเร็จ', 'ล้างข้อมูลเรียบร้อย', false);
-            });
-        }
-        
         // ฟังก์ชัน Export ที่ฉลาดขึ้น: เลือก PDF (ถ้ามีเน็ต) หรือ Print (ถ้า Offline)
         function handleExport() {
             if (typeof window.jspdf === 'undefined') {
@@ -907,15 +848,23 @@
             const exportAll = true; // บังคับรวมทุกชุดเสมอ
             
             const dateObj = new Date();
-            const today = `${String(dateObj.getDate()).padStart(2,'0')}-${String(dateObj.getMonth()+1).padStart(2,'0')}-${dateObj.getFullYear()}`;
+            // สร้างวันที่และเวลา
+            const d = String(dateObj.getDate()).padStart(2, '0');
+            const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+            const y = dateObj.getFullYear();
+            const hr = String(dateObj.getHours()).padStart(2, '0');
+            const min = String(dateObj.getMinutes()).padStart(2, '0');
+            
+            const timestamp = `${d}-${m}-${y} ${hr}:${min}`;
+            const filenameTimestamp = `${d}${m}${y}_${hr}${min}`;
             
             doc.setFont("Helvetica", "bold");
             doc.text("20m-SRT Test Results", 14, 20);
             doc.setFont("Helvetica", "normal");
             doc.setFontSize(10);
-            doc.text(`Date: ${today}`, 14, 26); 
+            doc.text(`Date: ${timestamp}`, 14, 26); // แสดงวันที่และเวลาใน PDF
             
-            let y = 35;
+            let yPos = 35;
             let items = Object.values(testSets.data).filter(d => exportAll || d.set === testSets.current);
             
              items.sort((a,b) => {
@@ -928,18 +877,50 @@
                 return;
             }
 
-            // --- ส่วนที่แก้ไข: วนลูปแสดงผลโดยไม่มี Header "Set X" ---
             items.forEach(s => {
-                if (y > 280) { doc.addPage(); y = 20; }
+                if (yPos > 280) { doc.addPage(); yPos = 20; }
                 
-                // ตัดโค้ดส่วนที่พิมพ์คำว่า Set ออกไป
-                
-                doc.text(`Runner #${s.runnerId}: ${s.score} laps (${s.distance}m) - MRS: ${s.maxSpeed} km/h - Time: ${s.time}`, 14, y);
-                y += 7;
+                doc.text(`Runner #${s.runnerId}: ${s.score} laps (${s.distance}m) - MRS: ${s.maxSpeed} km/h - Time: ${s.time}`, 14, yPos);
+                yPos += 7;
             });
 
-            doc.save(`PACER_AllSets_${today}.pdf`);
+            doc.save(`PACER_Result_${filenameTimestamp}.pdf`);
         }
+        
+        // --- ส่วนที่เพิ่มใหม่: จัดการคีย์ลัด (Keyboard Shortcuts) ---
+        document.addEventListener('keydown', function(event) {
+            // ถ้า Modal เปิดอยู่ ห้ามใช้คีย์ลัด
+            if (document.getElementById('custom-modal').style.display === 'flex') return;
+
+            // 1. ปุ่ม Spacebar: เริ่ม / พัก / ทำต่อ
+            if (event.code === 'Space') {
+                event.preventDefault(); // ป้องกันหน้าจอเลื่อนลง
+                
+                // กรณี: ยังไม่เริ่ม และปุ่ม Start แสดงอยู่
+                if (!isRunning && !isPaused && document.getElementById('start-btn').style.display !== 'none') {
+                    startTest();
+                }
+                // กรณี: กำลังวิ่ง หรือ พักอยู่
+                else if (isRunning || isPaused) {
+                    togglePause();
+                }
+            }
+
+            // 2. ปุ่มตัวเลข 1-9 และ 0
+            if (event.key >= '1' && event.key <= '9') {
+                saveRunnerScore(parseInt(event.key));
+            } else if (event.key === '0') {
+                saveRunnerScore(10); // เลข 0 แทนคนทื่ 10
+            }
+
+            // 3. ปุ่ม 's' หรือ 'S': ส่งออก PDF
+            if (event.key.toLowerCase() === 's') {
+                // เช็คว่ามีปุ่มแสดงอยู่ไหม (มีข้อมูลให้ export ไหม)
+                if (document.getElementById('pdf-export-btn').style.display !== 'none') {
+                    handleExport();
+                }
+            }
+        });
 
         window.addEventListener('beforeunload', (e) => {
             if (isRunning) {
