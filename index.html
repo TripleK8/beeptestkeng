@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>20m-SRT - Office Ready</title>
     
-    <!-- PDF Library (Online) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script> 
     <script>
         // เช็คว่าโหลดไลบรารีสำเร็จไหม ถ้าไม่ (Offline) จะใช้โหมด Print แทน
@@ -277,11 +276,6 @@
         }
         button.action-btn:hover { transform: translateY(-2px); }
 
-        button.end-set-btn {
-            background-color: #8e44ad;
-            box-shadow: 0 4px 15px rgba(142, 68, 173, 0.3);
-        }
-
         .progress-bar {
             width: 100%;
             height: 12px;
@@ -394,7 +388,6 @@
 <body>
 
     <div class="container">
-        <!-- Audio Status Indicator -->
         <div id="audio-status" class="audio-status-bar">
             <span>🔌 Waiting for Audio...</span>
         </div>
@@ -450,9 +443,8 @@
         <div class="button-group">
             <button id="start-btn" class="action-btn" onclick="startTest()">START TEST</button>
             <button id="pause-btn" class="action-btn" onclick="togglePause()" style="display: none; background-color: var(--pause-color);">PAUSE</button>
-            <button id="next-set-btn" class="action-btn end-set-btn" onclick="finishTestAndAdvance()" style="display: none;">▶️ เริ่มชุดต่อไป (Manual)</button>
-            <button id="reset-btn" class="action-btn" onclick="resetTest()" style="display: none; background-color: #e74c3c;">RESET ALL</button>
             <button id="pdf-export-btn" class="action-btn" onclick="handleExport()" style="display: none;">⬇️ ส่งออกเป็น PDF / Print</button>
+            <button id="reset-btn" class="action-btn" onclick="resetTest()" style="display: none; background-color: #e74c3c;">RESET ALL</button>
         </div>
         
         <div class="saved-results-container">
@@ -463,7 +455,6 @@
         </div>
     </div>
 
-    <!-- Modals -->
     <div class="modal-overlay" id="custom-modal">
         <div class="modal-content">
             <div id="modal-title" style="font-weight: bold; margin-bottom: 10px; font-size: 20px;">ℹ️ แจ้งเตือน</div>
@@ -769,9 +760,7 @@
             toggleButtonsState();
             
             if (isManual) {
-                showModal('✅ เสร็จสิ้น', `จบรอบที่ ${testSets.current} แล้ว เตรียมเริ่มรอบต่อไป`, false);
-                changeSet(1);
-                performReset(true);
+                showModal('✅ เสร็จสิ้น', `จบการทดสอบ`, false);
             }
         }
 
@@ -847,6 +836,7 @@
                 });
             }
             setupRunnerButtons();
+            toggleButtonsState(); // อัปเดตปุ่มเมื่อข้อมูลเปลี่ยน
         }
 
         function setupRunnerButtons() {
@@ -873,7 +863,6 @@
             document.getElementById('pause-btn').style.display = isRunning || isPaused ? 'inline-block' : 'none';
             document.getElementById('reset-btn').style.display = (isRunning || isPaused || hasData) ? 'inline-block' : 'none';
             document.getElementById('pdf-export-btn').style.display = hasData ? 'inline-block' : 'none';
-            document.getElementById('next-set-btn').style.display = (isRunning || isPaused) ? 'inline-block' : 'none';
         }
 
         function performReset(keepScores) {
@@ -901,10 +890,6 @@
             });
         }
         
-        function finishTestAndAdvance() {
-            finishTest(true);
-        }
-
         // ฟังก์ชัน Export ที่ฉลาดขึ้น: เลือก PDF (ถ้ามีเน็ต) หรือ Print (ถ้า Offline)
         function handleExport() {
             if (typeof window.jspdf === 'undefined') {
@@ -960,16 +945,6 @@
 
             doc.save(`PACER_AllSets_${today}.pdf`);
         }
-
-        function changeSet(val) {
-            let next = testSets.current + val;
-            if (next >= 1 && next <= testSets.total) {
-                testSets.current = next;
-                renderRunnerScores();
-            }
-        }
-
-        function updateTotalSets(v) { testSets.total = parseInt(v); }
 
         window.addEventListener('beforeunload', (e) => {
             if (isRunning) {
