@@ -928,17 +928,12 @@
                 return;
             }
 
-            let lastSet = 0;
+            // --- ส่วนที่แก้ไข: วนลูปแสดงผลโดยไม่มี Header "Set X" ---
             items.forEach(s => {
                 if (y > 280) { doc.addPage(); y = 20; }
-                if (s.set !== lastSet) {
-                    y += 5;
-                    doc.setFont("Helvetica", "bold");
-                    doc.text(`Set ${s.set}`, 14, y);
-                    doc.setFont("Helvetica", "normal");
-                    y += 7;
-                    lastSet = s.set;
-                }
+                
+                // ตัดโค้ดส่วนที่พิมพ์คำว่า Set ออกไป
+                
                 doc.text(`Runner #${s.runnerId}: ${s.score} laps (${s.distance}m) - MRS: ${s.maxSpeed} km/h - Time: ${s.time}`, 14, y);
                 y += 7;
             });
